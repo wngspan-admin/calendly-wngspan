@@ -2,8 +2,16 @@ import dayjs from "@calcom/dayjs";
 import { validateAndGetCorrectedUsernameInTeam } from "@calcom/features/auth/signup/utils/validateUsername";
 import { HttpError } from "@calcom/lib/http-error";
 import { prisma } from "@calcom/prisma";
+import type { MembershipRole } from "@calcom/prisma/enums";
 
-export async function findTokenByToken({ token }: { token: string }) {
+type SignupInviteToken = {
+  id: number;
+  expires: Date;
+  teamId: number | null;
+  membershipRole: MembershipRole | null;
+};
+
+export async function findTokenByToken({ token }: { token: string }): Promise<SignupInviteToken> {
   const foundToken = await prisma.verificationToken.findUnique({
     where: {
       token,
@@ -12,6 +20,7 @@ export async function findTokenByToken({ token }: { token: string }) {
       id: true,
       expires: true,
       teamId: true,
+      membershipRole: true,
     },
   });
 
@@ -25,7 +34,7 @@ export async function findTokenByToken({ token }: { token: string }) {
   return foundToken;
 }
 
-export function throwIfTokenExpired(expires?: Date) {
+export function throwIfTokenExpired(expires?: Date): void {
   if (!expires) return;
   if (dayjs(expires).isBefore(dayjs())) {
     throw new HttpError({
@@ -45,7 +54,7 @@ export async function validateAndGetCorrectedUsernameForTeam({
   email: string;
   teamId: number | null;
   isSignup: boolean;
-}) {
+}): Promise<string> {
   if (!teamId) return username;
 
   const teamUserValidation = await validateAndGetCorrectedUsernameInTeam(username, email, teamId, isSignup);

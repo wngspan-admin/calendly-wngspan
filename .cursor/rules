@@ -1,1 +1,44 @@
-../agents/rules
+# General Development Rules
+
+Before making changes:
+- Inspect the relevant files, configs, package files, and existing patterns.
+- Do not assume framework defaults if this codebase differs.
+- Identify the smallest safe change needed.
+
+Implementation:
+- Follow existing architecture, naming, formatting, and error handling patterns.
+- Prefer existing utilities/components/dependencies over adding new ones.
+- Do not introduce new dependencies unless clearly necessary.
+- Avoid unrelated refactors.
+- Preserve public API contracts unless explicitly asked to change them.
+- Keep changes minimal, focused, and reviewable.
+
+Testing:
+- When changing behavior, add or update tests using the existing test framework.
+- Prefer targeted tests related to the changed files.
+- If tests cannot be run, explain what should be tested manually.
+
+Security:
+- Check authorization, validation, sanitization, and secret handling.
+- Never hardcode secrets.
+- Do not log sensitive data.
+- Be cautious with user data, payments, uploads, and authentication logic.
+
+Database:
+- For schema changes, inspect the ORM/migration pattern first.
+- Avoid destructive migrations unless explicitly requested.
+- Consider backward compatibility and production data impact.
+
+Frontend:
+- Use existing design system components and styling conventions.
+- Include loading, empty, error, and responsive states when relevant.
+- Preserve accessibility with semantic HTML, labels, focus states, and keyboard support.
+
+Documentation:
+- Update README, env examples, or API docs when setup, config, commands, or public behavior changes.
+
+Output:
+- Summarize what changed.
+- List files modified.
+- Mention tests run or recommended validation.
+- Call out risks, assumptions, or follow-up work.

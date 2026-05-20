@@ -23,10 +23,10 @@ export const topLevelRoutesExcludedFromOrgRewrite: string[] = globSync(
     cwd: __dirname,
   }
 )
-  .map((filename) => {
-    const normalizedFilename = filename.replace(/\\/g, "/");
-
-    return normalizedFilename
+  .map((filename) =>
+    filename
+      // Normalize glob output so the rewrite config is stable across Windows and POSIX.
+      .replace(/\\/g, "/")
       // Remove the directory prefix (pages/, app/ and route group folders.)
       .replace(
         /^(app\/\(use-page-wrapper\)\/\(main-nav\)|app\/\(use-page-wrapper\)|app\/\(booking-page-wrapper\)|pages|app)\//,
