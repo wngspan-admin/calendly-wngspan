@@ -20,14 +20,6 @@ export const adminRouter = router({
     const { default: handler } = await import("./listPaginated.handler");
     return handler(opts);
   }),
-  listTeams: authedAdminProcedure.query(async (opts) => {
-    const { default: handler } = await import("./listTeams.handler");
-    return handler(opts);
-  }),
-  listOrganizations: authedAdminProcedure.query(async (opts) => {
-    const { default: handler } = await import("./listOrganizations.handler");
-    return handler(opts);
-  }),
   sendPasswordReset: authedAdminProcedure.input(ZAdminPasswordResetSchema).mutation(async (opts) => {
     const { default: handler } = await import("./sendPasswordReset.handler");
     return handler(opts);
