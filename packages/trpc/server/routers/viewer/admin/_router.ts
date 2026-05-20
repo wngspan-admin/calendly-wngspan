@@ -11,6 +11,7 @@ import { ZAdminPasswordResetSchema } from "./sendPasswordReset.schema";
 import { ZSetSMSLockState } from "./setSMSLockState.schema";
 import { toggleFeatureFlag } from "./toggleFeatureFlag.procedure";
 import { ZAdminUnassignFeatureFromTeamSchema } from "./unassignFeatureFromTeam.schema";
+import { ZAdminUpdateOrganizationSchema } from "./updateOrganization.schema";
 import { watchlistRouter } from "./watchlist/_router";
 
 // biome-ignore lint/nursery/useExplicitType: explicit router annotations widen incorrectly and break tRPC inference here.
@@ -72,5 +73,17 @@ export const adminRouter = router({
       const { default: handler } = await import("./unassignFeatureFromTeam.handler");
       return handler(opts);
     }),
+  listOrganizations: authedAdminProcedure.query(async (opts) => {
+    const { default: handler } = await import("./listOrganizations.handler");
+    return handler(opts);
+  }),
+  listTeams: authedAdminProcedure.query(async (opts) => {
+    const { default: handler } = await import("./listTeams.handler");
+    return handler(opts);
+  }),
+  updateOrganization: authedAdminProcedure.input(ZAdminUpdateOrganizationSchema).mutation(async (opts) => {
+    const { default: handler } = await import("./updateOrganization.handler");
+    return handler(opts);
+  }),
   watchlist: watchlistRouter,
 });
