@@ -11,6 +11,13 @@ vi.mock("@calcom/lib/constants", () => ({
   RECORDING_DEFAULT_ICON: "/recording-default-icon.svg",
 }));
 
+vi.mock("@daily-co/daily-react", () => ({
+  useDaily: vi.fn(),
+  useDailyEvent: vi.fn(),
+  useRecording: vi.fn(),
+  useTranscription: vi.fn(),
+}));
+
 const mockDaily: DailyCall = {
   startRecording: vi.fn(),
   stopRecording: vi.fn(),

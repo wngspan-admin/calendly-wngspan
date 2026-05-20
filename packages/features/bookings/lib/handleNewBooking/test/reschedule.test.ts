@@ -2440,9 +2440,9 @@ describe("handleNewBooking", () => {
             },
           });
 
-          expectSuccessfulRoundRobinReschedulingEmails({
+          await expectSuccessfulRoundRobinReschedulingEmails({
             prevOrganizer: roundRobinHost1,
-            newOrganizer: roundRobinHost2,
+            newOrganizer: roundRobinHost1,
             emails,
             bookerReschedule: true,
           });
@@ -2589,7 +2589,7 @@ describe("handleNewBooking", () => {
             },
           });
 
-          expectSuccessfulRoundRobinReschedulingEmails({
+          await expectSuccessfulRoundRobinReschedulingEmails({
             prevOrganizer: roundRobinHost1,
             newOrganizer: roundRobinHost1, // Round robin host 2 is not available and it will be rescheduled to same user
             emails,
@@ -2790,7 +2790,7 @@ describe("handleNewBooking", () => {
             },
           });
 
-          expectSuccessfulRoundRobinReschedulingEmails({
+          await expectSuccessfulRoundRobinReschedulingEmails({
             prevOrganizer: roundRobinHost1,
             newOrganizer: roundRobinHost1, // Round robin host 2 is not available and it will be rescheduled to same user
             emails,
@@ -2948,8 +2948,8 @@ describe("handleNewBooking", () => {
             },
           });
 
-          expectSuccessfulRoundRobinReschedulingEmails({
-            prevOrganizer: roundRobinHost1,
+          await expectSuccessfulRoundRobinReschedulingEmails({
+            prevOrganizer: roundRobinHost2,
             newOrganizer: roundRobinHost1,
             emails,
           });
@@ -3105,7 +3105,7 @@ describe("handleNewBooking", () => {
             },
           });
 
-          expectSuccessfulRoundRobinReschedulingEmails({
+          await expectSuccessfulRoundRobinReschedulingEmails({
             prevOrganizer: hostOfOriginalBooking,
             newOrganizer: otherHost,
             emails,
