@@ -2,11 +2,10 @@
 
 import superjson from "superjson";
 
+import type { AppRouter } from "@calcom/trpc/server/routers/_app";
 import { ENDPOINTS } from "@calcom/trpc/react/shared";
 
-import { httpBatchLink, httpLink, loggerLink, splitLink } from "@trpc/client";
-
-import { trpc } from "./trpc";
+import { createTRPCUntypedClient, httpBatchLink, httpLink, loggerLink, splitLink } from "@trpc/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const resolveEndpoint = (links: any) => {
@@ -38,7 +37,7 @@ const url =
       ? `https://${process.env.VERCEL_URL}/api/trpc`
       : `${process.env.NEXT_PUBLIC_WEBAPP_URL}/api/trpc`;
 
-export const trpcClient = trpc.createClient({
+export const trpcClient = createTRPCUntypedClient<AppRouter>({
   links: [
     // adds pretty logs to your console in development and logs errors in production
     loggerLink({
