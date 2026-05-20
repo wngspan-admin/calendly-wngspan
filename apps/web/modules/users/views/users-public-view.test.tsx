@@ -11,6 +11,14 @@ vi.mock("@calcom/lib/hooks/useRouterQuery", () => ({
   useRouterQuery: vi.fn(),
 }));
 
+vi.mock("@calcom/web/modules/event-types/components", () => ({
+  EventTypeDescriptionLazy: () => <div data-testid="event-type-description" />,
+}));
+
+vi.mock("sonner", () => ({
+  Toaster: () => null,
+}));
+
 function mockedUserPageComponentProps(props: Partial<React.ComponentProps<typeof UserPage>>) {
   return {
     themeBasis: "dark",

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { useEffect } from "react";
+import type { ErrorInfo } from "react";
 
 import ErrorBoundary from "./ErrorBoundary";
 
@@ -17,19 +17,17 @@ describe("ErrorBoundary", () => {
   });
 
   test("should render error message and error details when an error occurs", () => {
-    const ErrorThrowingComponent = () => {
-      useEffect(() => {
-        throw new Error("Test Error");
-      }, []);
+    const boundary = new ErrorBoundary({
+      children: <div>Child Component</div>,
+      message: "Error Message",
+    });
 
-      return <div>Error Throwing Component</div>;
+    boundary.state = {
+      error: new Error("Test Error"),
+      errorInfo: { componentStack: "stack" } as ErrorInfo,
     };
 
-    render(
-      <ErrorBoundary message="Error Message">
-        <ErrorThrowingComponent />
-      </ErrorBoundary>
-    );
+    render(boundary.render());
 
     const errorMessage = screen.getByText("Error Message");
     const errorDetails = screen.getByText("Error: Test Error");

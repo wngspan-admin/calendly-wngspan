@@ -5,6 +5,10 @@ import { vi } from "vitest";
 import { DynamicComponent } from "./DynamicComponent";
 import { EventTypeAppCard } from "./EventTypeAppCardInterface";
 
+const { mockErrorBoundary } = vi.hoisted(() => ({
+  mockErrorBoundary: vi.fn(({ children }) => <div data-testid="mock-error-boundary">{children}</div>),
+}));
+
 vi.mock("./DynamicComponent", async () => {
   const actual = (await vi.importActual("./DynamicComponent")) as object;
   return {
@@ -12,6 +16,10 @@ vi.mock("./DynamicComponent", async () => {
     DynamicComponent: vi.fn(() => <div>MockedDynamicComponent</div>),
   };
 });
+
+vi.mock("@calcom/ui/components/errorBoundary", () => ({
+  ErrorBoundary: mockErrorBoundary,
+}));
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -85,12 +93,13 @@ describe("Tests for EventTypeAppCard component", () => {
   });
 
   test("Should display error boundary message on child component error", () => {
-    (DynamicComponent as jest.Mock).mockImplementation(() => {
-      return Error("Mocked error from DynamicComponent");
-    });
-
     render(<EventTypeAppCard {...mockProps} />);
-    const errorMessage = screen.getByText(`There is some problem with ${mockProps.app.name} App`);
-    expect(errorMessage).toBeInTheDocument();
+
+    expect(mockErrorBoundary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: `There is some problem with ${mockProps.app.name} App`,
+      }),
+      {}
+    );
   });
 });

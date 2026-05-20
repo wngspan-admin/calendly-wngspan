@@ -229,6 +229,7 @@ model EventType {
   seatsShowAttendees                       Boolean?               @default(false)
   seatsShowAvailabilityCount               Boolean?               @default(true)
   schedulingType                           SchedulingType?
+  schedulingTypeData                       Json?
   schedule                                 Schedule?              @relation(fields: [scheduleId], references: [id])
   scheduleId                               Int?
   allowReschedulingCancelledBookings       Boolean?               @default(false)
@@ -742,19 +743,20 @@ enum MembershipRole {
 }
 
 model Membership {
-  id              Int               @id @default(autoincrement())
-  teamId          Int
-  userId          Int
-  accepted        Boolean           @default(false)
-  role            MembershipRole
-  customRoleId    String?
-  customRole      Role?             @relation(fields: [customRoleId], references: [id])
-  team            Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  AttributeToUser AttributeToUser[]
-  createdAt       DateTime?         @default(now())
-  updatedAt       DateTime?         @updatedAt
-  Host            Host[]
+  id                   Int               @id @default(autoincrement())
+  teamId               Int
+  userId               Int
+  accepted             Boolean           @default(false)
+  disableImpersonation Boolean           @default(false)
+  role                 MembershipRole
+  customRoleId         String?
+  customRole           Role?             @relation(fields: [customRoleId], references: [id])
+  team                 Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  AttributeToUser      AttributeToUser[]
+  createdAt            DateTime?         @default(now())
+  updatedAt            DateTime?         @updatedAt
+  Host                 Host[]
 
   @@unique([userId, teamId])
   @@index([teamId])

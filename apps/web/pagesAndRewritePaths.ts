@@ -23,8 +23,10 @@ export const topLevelRoutesExcludedFromOrgRewrite: string[] = globSync(
     cwd: __dirname,
   }
 )
-  .map((filename) =>
-    filename
+  .map((filename) => {
+    const normalizedFilename = filename.replace(/\\/g, "/");
+
+    return normalizedFilename
       // Remove the directory prefix (pages/, app/ and route group folders.)
       .replace(
         /^(app\/\(use-page-wrapper\)\/\(main-nav\)|app\/\(use-page-wrapper\)|app\/\(booking-page-wrapper\)|pages|app)\//,
@@ -33,8 +35,8 @@ export const topLevelRoutesExcludedFromOrgRewrite: string[] = globSync(
       // Remove file extensions
       .replace(/(\.tsx|\.js|\.ts)/, "")
       // Extract only the top-level route name (e.g., /abc/def -> abc)
-      .replace(/\/.*/, "")
-  )
+      .replace(/\/.*/, "");
+  })
   .filter(
     (v, i, self) =>
       self.indexOf(v) === i &&

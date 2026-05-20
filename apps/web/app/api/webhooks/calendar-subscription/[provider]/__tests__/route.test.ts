@@ -3,6 +3,21 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 
 import { CalendarSubscriptionService } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionService";
 
+const routeMocks = vi.hoisted(() => ({
+  calendarSyncService: vi.fn(function MockCalendarSyncService() {
+    return {
+      handleEvents: vi.fn(),
+    };
+  }),
+  calendarCacheEventService: vi.fn(function MockCalendarCacheEventService() {
+    return {
+      handleEvents: vi.fn(),
+      cleanupCache: vi.fn(),
+      cleanupStaleCache: vi.fn(),
+    };
+  }),
+}));
+
 vi.mock("next/server", () => ({
   NextRequest: class MockNextRequest {
     url: string;
@@ -34,8 +49,12 @@ vi.mock("next/server", () => ({
 }));
 
 vi.mock("@calcom/features/calendar-subscription/lib/CalendarSubscriptionService");
-vi.mock("@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService");
-vi.mock("@calcom/features/calendar-subscription/lib/sync/CalendarSyncService");
+vi.mock("@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService", () => ({
+  CalendarCacheEventService: routeMocks.calendarCacheEventService,
+}));
+vi.mock("@calcom/features/calendar-subscription/lib/sync/CalendarSyncService", () => ({
+  CalendarSyncService: routeMocks.calendarSyncService,
+}));
 vi.mock("@calcom/prisma", () => ({
   prisma: {},
 }));
@@ -45,7 +64,6 @@ const mockCalendarSubscriptionService = vi.mocked(CalendarSubscriptionService);
 describe("/api/webhooks/calendar-subscription/[provider]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.resetModules();
   });
 
   describe("Provider validation", () => {
