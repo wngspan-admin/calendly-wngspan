@@ -8,8 +8,9 @@ import {
   createMockFoundToken,
   createMockTeam,
 } from "@calcom/features/auth/signup/handlers/__tests__/mocks/signup.factories";
+import { MembershipRole } from "@calcom/prisma/enums";
 import type { Mock } from "vitest";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const mockFindTokenByToken: Mock = vi.fn();
 const mockValidateAndGetCorrectedUsernameForTeam: Mock = vi.fn();
@@ -106,6 +107,7 @@ vi.mock("@calcom/lib/server/username", () => ({
 // Import after mocks
 import "./calcomSignupHandler";
 import { runP2002TestSuite } from "@calcom/features/auth/signup/handlers/__tests__/p2002.test-suite";
+import { createOrUpdateMemberships } from "@calcom/features/auth/signup/utils/createOrUpdateMemberships";
 
 function callHandler(body: SignupBody): Promise<MockResponse> {
   if (!mockCapturedHandler) throw new Error("Handler not captured");
@@ -123,4 +125,27 @@ runP2002TestSuite("calcomHandler", callHandler, () => {
   mockValidateAndGetCorrectedUsernameForTeam.mockResolvedValue("testuser");
   prismaMock.team.findUnique.mockResolvedValue(createMockTeam() as never);
   prismaMock.verificationToken.delete.mockResolvedValue({} as never);
+});
+
+describe("calcomSignupHandler invite role preservation", () => {
+  it("passes the token role through to created memberships", async () => {
+    mockFindTokenByToken.mockResolvedValue(createMockFoundToken({ membershipRole: MembershipRole.OWNER }));
+    prismaMock.user.findUnique.mockResolvedValue(null as never);
+    prismaMock.user.findFirst.mockResolvedValue(null as never);
+    prismaMock.user.upsert.mockResolvedValue({ id: 11 } as never);
+
+    await callHandler({
+      email: "fresh-owner@example.com",
+      password: "ValidPassword123!",
+      username: "freshowner",
+      language: "en",
+      token: "invite-token",
+    });
+
+    expect(createOrUpdateMemberships).toHaveBeenCalledWith(
+      expect.objectContaining({
+        membershipRole: MembershipRole.OWNER,
+      })
+    );
+  });
 });

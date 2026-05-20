@@ -4,7 +4,14 @@ import { HttpError } from "@calcom/lib/http-error";
 import { prisma } from "@calcom/prisma";
 import type { MembershipRole } from "@calcom/prisma/enums";
 
-export async function findTokenByToken({ token }: { token: string }) {
+type SignupInviteToken = {
+  id: number;
+  expires: Date;
+  teamId: number | null;
+  membershipRole: MembershipRole | null;
+};
+
+export async function findTokenByToken({ token }: { token: string }): Promise<SignupInviteToken> {
   const foundToken = await prisma.verificationToken.findUnique({
     where: {
       token,
@@ -13,7 +20,7 @@ export async function findTokenByToken({ token }: { token: string }) {
       id: true,
       expires: true,
       teamId: true,
-      identifier: true,
+      membershipRole: true,
     },
   });
 
@@ -27,7 +34,7 @@ export async function findTokenByToken({ token }: { token: string }) {
   return foundToken;
 }
 
-export function throwIfTokenExpired(expires?: Date) {
+export function throwIfTokenExpired(expires?: Date): void {
   if (!expires) return;
   if (dayjs(expires).isBefore(dayjs())) {
     throw new HttpError({
@@ -47,7 +54,7 @@ export async function validateAndGetCorrectedUsernameForTeam({
   email: string;
   teamId: number | null;
   isSignup: boolean;
-}) {
+}): Promise<string> {
   if (!teamId) return username;
 
   const teamUserValidation = await validateAndGetCorrectedUsernameInTeam(username, email, teamId, isSignup);
@@ -64,15 +71,4 @@ export async function validateAndGetCorrectedUsernameForTeam({
     });
   }
   return teamUserValidation.username;
-}
-
-/**
- * Extracts the MembershipRole from a team-invite VerificationToken identifier.
- * Identifier format: "team-invite:ROLE:email@example.com"
- * Returns null for any other identifier format (non-team-invite tokens).
- */
-export function extractTeamInviteRole(identifier: string): MembershipRole | null {
-  const match = /^team-invite:(MEMBER|ADMIN|OWNER):/.exec(identifier);
-  if (!match) return null;
-  return match[1] as MembershipRole;
 }

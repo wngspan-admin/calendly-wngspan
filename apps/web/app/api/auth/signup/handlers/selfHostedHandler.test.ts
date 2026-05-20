@@ -7,8 +7,9 @@ import {
   createMockFoundToken,
   createMockTeam,
 } from "@calcom/features/auth/signup/handlers/__tests__/mocks/signup.factories";
+import { MembershipRole } from "@calcom/prisma/enums";
 import type { Mock } from "vitest";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const mockFindTokenByToken: Mock = vi.fn();
 const mockValidateAndGetCorrectedUsernameForTeam: Mock = vi.fn();
@@ -54,10 +55,10 @@ vi.mock("@calcom/features/auth/signup/utils/token", () => ({
   throwIfTokenExpired: vi.fn(),
   validateAndGetCorrectedUsernameForTeam: (...args: unknown[]) =>
     mockValidateAndGetCorrectedUsernameForTeam(...args),
-  extractTeamInviteRole: vi.fn().mockReturnValue(null),
 }));
 
 import { runP2002TestSuite } from "@calcom/features/auth/signup/handlers/__tests__/p2002.test-suite";
+import { createOrUpdateMemberships } from "@calcom/features/auth/signup/utils/createOrUpdateMemberships";
 // Import after mocks
 import handler from "./selfHostedHandler";
 
@@ -72,4 +73,27 @@ runP2002TestSuite("selfHostedHandler", callHandler, () => {
   mockValidateAndGetCorrectedUsernameForTeam.mockResolvedValue("testuser");
   prismaMock.team.findUnique.mockResolvedValue(createMockTeam() as never);
   prismaMock.verificationToken.delete.mockResolvedValue({} as never);
+});
+
+describe("selfHostedHandler invite role preservation", () => {
+  it("passes the token role through to created memberships", async () => {
+    mockFindTokenByToken.mockResolvedValue(createMockFoundToken({ membershipRole: MembershipRole.ADMIN }));
+    prismaMock.user.findUnique.mockResolvedValue(null as never);
+    prismaMock.user.findFirst.mockResolvedValue(null as never);
+    prismaMock.user.upsert.mockResolvedValue({ id: 7 } as never);
+
+    await callHandler({
+      email: "fresh-admin@example.com",
+      password: "ValidPassword123!",
+      username: "freshadmin",
+      language: "en",
+      token: "invite-token",
+    });
+
+    expect(createOrUpdateMemberships).toHaveBeenCalledWith(
+      expect.objectContaining({
+        membershipRole: MembershipRole.ADMIN,
+      })
+    );
+  });
 });

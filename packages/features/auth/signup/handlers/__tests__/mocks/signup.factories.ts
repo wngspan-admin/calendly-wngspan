@@ -1,3 +1,5 @@
+import { MembershipRole } from "@calcom/prisma/enums";
+
 export interface MockTeam {
   id: number;
   isOrganization: boolean;
@@ -9,7 +11,7 @@ export interface MockFoundToken {
   id: number;
   teamId: number | null;
   expires: Date;
-  identifier: string;
+  membershipRole: MembershipRole | null;
 }
 
 export interface MockUser {
@@ -39,7 +41,7 @@ export function createMockFoundToken(overrides: Partial<MockFoundToken> = {}): M
     id: 1,
     teamId: 1,
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    identifier: "some-identifier",
+    membershipRole: MembershipRole.MEMBER,
     ...overrides,
   };
 }

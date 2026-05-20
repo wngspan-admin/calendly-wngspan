@@ -1,7 +1,23 @@
 import { NextRequest } from "next/server";
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { CalendarSubscriptionService } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionService";
+const {
+  mockCalendarSubscriptionService,
+  mockCalendarSubscriptionServiceInstance,
+} = vi.hoisted(() => {
+  const mockCalendarSubscriptionServiceInstance = {
+    isCacheEnabled: vi.fn(),
+    isSyncEnabled: vi.fn(),
+    checkForNewSubscriptions: vi.fn(),
+  };
+
+  return {
+    mockCalendarSubscriptionService: vi.fn(function MockCalendarSubscriptionService() {
+      return mockCalendarSubscriptionServiceInstance;
+    }),
+    mockCalendarSubscriptionServiceInstance,
+  };
+});
 
 const routeMocks = vi.hoisted(() => ({
   calendarSyncService: vi.fn(function MockCalendarSyncService() {
@@ -48,24 +64,63 @@ vi.mock("next/server", () => ({
   },
 }));
 
-vi.mock("@calcom/features/calendar-subscription/lib/CalendarSubscriptionService");
+vi.mock("@calcom/features/calendar-subscription/lib/CalendarSubscriptionService", () => ({
+  CalendarSubscriptionService: mockCalendarSubscriptionService,
+}));
 vi.mock("@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService", () => ({
-  CalendarCacheEventService: routeMocks.calendarCacheEventService,
+  CalendarCacheEventService: vi.fn(function MockCalendarCacheEventService() {
+    return {};
+  }),
 }));
 vi.mock("@calcom/features/calendar-subscription/lib/sync/CalendarSyncService", () => ({
-  CalendarSyncService: routeMocks.calendarSyncService,
+  CalendarSyncService: vi.fn(function MockCalendarSyncService() {
+    return {};
+  }),
+}));
+vi.mock("@calcom/features/bookings/repositories/BookingRepository", () => ({
+  BookingRepository: vi.fn(function MockBookingRepository() {
+    return {};
+  }),
+}));
+vi.mock("@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventRepository", () => ({
+  CalendarCacheEventRepository: vi.fn(function MockCalendarCacheEventRepository() {
+    return {};
+  }),
+}));
+vi.mock("@calcom/features/calendar-subscription/adapters/AdaptersFactory", () => ({
+  DefaultAdapterFactory: vi.fn(function MockDefaultAdapterFactory() {
+    return {};
+  }),
+}));
+vi.mock("@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository", () => ({
+  SelectedCalendarRepository: vi.fn(function MockSelectedCalendarRepository() {
+    return {};
+  }),
+}));
+vi.mock("@calcom/features/di/containers/FeatureRepository", () => ({
+  getFeatureRepository: vi.fn(() => ({})),
+}));
+vi.mock("@calcom/features/di/containers/TeamFeatureRepository", () => ({
+  getTeamFeatureRepository: vi.fn(() => ({})),
+}));
+vi.mock("@calcom/features/di/containers/UserFeatureRepository", () => ({
+  getUserFeatureRepository: vi.fn(() => ({})),
 }));
 vi.mock("@calcom/prisma", () => ({
   prisma: {},
 }));
-
-const mockCalendarSubscriptionService = vi.mocked(CalendarSubscriptionService);
+vi.mock("@calcom/web/app/api/defaultResponderForAppDir", () => ({
+  defaultResponderForAppDir: vi.fn((handler) => handler),
+}));
 
 describe("/api/cron/calendar-subscriptions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("CRON_API_KEY", "test-cron-key");
     vi.stubEnv("CRON_SECRET", "test-cron-secret");
+    mockCalendarSubscriptionServiceInstance.isCacheEnabled.mockResolvedValue(true);
+    mockCalendarSubscriptionServiceInstance.isSyncEnabled.mockResolvedValue(true);
+    mockCalendarSubscriptionServiceInstance.checkForNewSubscriptions.mockResolvedValue(undefined);
   });
 
   describe("Authentication", () => {
@@ -73,19 +128,19 @@ describe("/api/cron/calendar-subscriptions", () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
 
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(403);
       const body = await response.json();
       expect(body.message).toBe("Forbiden");
-    }, 10000);
+    });
 
     test("should return 403 when invalid API key is provided", async () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "invalid-key");
 
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(403);
       const body = await response.json();
@@ -96,16 +151,8 @@ describe("/api/cron/calendar-subscriptions", () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "test-cron-key");
 
-      const mockIsCacheEnabled = vi.fn().mockResolvedValue(true);
-      const mockIsSyncEnabled = vi.fn().mockResolvedValue(true);
-      const mockCheckForNewSubscriptions = vi.fn().mockResolvedValue(undefined);
-
-      mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
-      mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
-      mockCalendarSubscriptionService.prototype.checkForNewSubscriptions = mockCheckForNewSubscriptions;
-
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(200);
     });
@@ -115,43 +162,29 @@ describe("/api/cron/calendar-subscriptions", () => {
     test("should return early when cache AND sync are disabled", async () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "test-cron-key");
-
-      const mockIsCacheEnabled = vi.fn().mockResolvedValue(false);
-      const mockIsSyncEnabled = vi.fn().mockResolvedValue(false);
-      const mockCheckForNewSubscriptions = vi.fn();
-
-      mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
-      mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
-      mockCalendarSubscriptionService.prototype.checkForNewSubscriptions = mockCheckForNewSubscriptions;
+      mockCalendarSubscriptionServiceInstance.isCacheEnabled.mockResolvedValue(false);
+      mockCalendarSubscriptionServiceInstance.isSyncEnabled.mockResolvedValue(false);
 
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.ok).toBe(true);
-      expect(mockCheckForNewSubscriptions).not.toHaveBeenCalled();
+      expect(mockCalendarSubscriptionServiceInstance.checkForNewSubscriptions).not.toHaveBeenCalled();
     });
 
     test("should proceed when both cache and sync are enabled", async () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "test-cron-key");
 
-      const mockIsCacheEnabled = vi.fn().mockResolvedValue(true);
-      const mockIsSyncEnabled = vi.fn().mockResolvedValue(true);
-      const mockCheckForNewSubscriptions = vi.fn().mockResolvedValue(undefined);
-
-      mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
-      mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
-      mockCalendarSubscriptionService.prototype.checkForNewSubscriptions = mockCheckForNewSubscriptions;
-
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.ok).toBe(true);
-      expect(mockCheckForNewSubscriptions).toHaveBeenCalledOnce();
+      expect(mockCalendarSubscriptionServiceInstance.checkForNewSubscriptions).toHaveBeenCalledOnce();
     });
   });
 
@@ -160,38 +193,24 @@ describe("/api/cron/calendar-subscriptions", () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "test-cron-key");
 
-      const mockIsCacheEnabled = vi.fn().mockResolvedValue(true);
-      const mockIsSyncEnabled = vi.fn().mockResolvedValue(true);
-      const mockCheckForNewSubscriptions = vi.fn().mockResolvedValue(undefined);
-
-      mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
-      mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
-      mockCalendarSubscriptionService.prototype.checkForNewSubscriptions = mockCheckForNewSubscriptions;
-
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.ok).toBe(true);
-      expect(mockCheckForNewSubscriptions).toHaveBeenCalledOnce();
+      expect(mockCalendarSubscriptionServiceInstance.checkForNewSubscriptions).toHaveBeenCalledOnce();
     });
 
     test("should handle subscription checking errors gracefully", async () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "test-cron-key");
-
-      const mockError = new Error("Subscription service unavailable");
-      const mockIsCacheEnabled = vi.fn().mockResolvedValue(true);
-      const mockIsSyncEnabled = vi.fn().mockResolvedValue(true);
-      const mockCheckForNewSubscriptions = vi.fn().mockRejectedValue(mockError);
-
-      mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
-      mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
-      mockCalendarSubscriptionService.prototype.checkForNewSubscriptions = mockCheckForNewSubscriptions;
+      mockCalendarSubscriptionServiceInstance.checkForNewSubscriptions.mockRejectedValue(
+        new Error("Subscription service unavailable")
+      );
 
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(500);
       const body = await response.json();
@@ -201,17 +220,10 @@ describe("/api/cron/calendar-subscriptions", () => {
     test("should handle non-Error exceptions", async () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "test-cron-key");
-
-      const mockIsCacheEnabled = vi.fn().mockResolvedValue(true);
-      const mockIsSyncEnabled = vi.fn().mockResolvedValue(true);
-      const mockCheckForNewSubscriptions = vi.fn().mockRejectedValue("String error");
-
-      mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
-      mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
-      mockCalendarSubscriptionService.prototype.checkForNewSubscriptions = mockCheckForNewSubscriptions;
+      mockCalendarSubscriptionServiceInstance.checkForNewSubscriptions.mockRejectedValue("String error");
 
       const { GET } = await import("../route");
-      const response = await GET(request, { params: Promise.resolve({}) });
+      const response = await GET(request);
 
       expect(response.status).toBe(500);
       const body = await response.json();
@@ -224,16 +236,8 @@ describe("/api/cron/calendar-subscriptions", () => {
       const request = new NextRequest("http://localhost/api/cron/calendar-subscriptions");
       request.headers.set("authorization", "test-cron-key");
 
-      const mockIsCacheEnabled = vi.fn().mockResolvedValue(true);
-      const mockIsSyncEnabled = vi.fn().mockResolvedValue(true);
-      const mockCheckForNewSubscriptions = vi.fn().mockResolvedValue(undefined);
-
-      mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
-      mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
-      mockCalendarSubscriptionService.prototype.checkForNewSubscriptions = mockCheckForNewSubscriptions;
-
       const { GET } = await import("../route");
-      await GET(request, { params: Promise.resolve({}) });
+      await GET(request);
 
       expect(mockCalendarSubscriptionService).toHaveBeenCalledWith({
         adapterFactory: expect.any(Object),
