@@ -30,6 +30,7 @@ import prisma from "@calcom/prisma";
 import {
   CreationSource,
   IdentityProvider,
+  type MembershipRole,
   WatchlistAction,
   WatchlistSource,
   WatchlistType,
@@ -39,15 +40,15 @@ import { buildLegacyRequest } from "@calcom/web/lib/buildLegacyCtx";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-const log = logger.getSubLogger({ prefix: ["signupCalcomHandler"] });
+const log: ReturnType<typeof logger.getSubLogger> = logger.getSubLogger({
+  prefix: ["signupCalcomHandler"],
+});
 
 const billingService = {
   async createCustomer(_args: Record<string, unknown>): Promise<{ stripeCustomerId: string }> {
     return { stripeCustomerId: "" };
   },
-  async createSubscriptionCheckout(
-    _args: Record<string, unknown>
-  ): Promise<{ sessionId: string }> {
+  async createSubscriptionCheckout(_args: Record<string, unknown>): Promise<{ sessionId: string }> {
     return { sessionId: "" };
   },
 };
@@ -91,7 +92,12 @@ const handler: CustomNextApiHandler = async (body, usernameStatus, query) => {
 
   const email = _email.toLowerCase();
 
-  let foundToken: { id: number; teamId: number | null; expires: Date } | null = null;
+  let foundToken: {
+    id: number;
+    teamId: number | null;
+    expires: Date;
+    membershipRole: MembershipRole | null;
+  } | null = null;
   if (token) {
     foundToken = await findTokenByToken({ token });
     throwIfTokenExpired(foundToken?.expires);
@@ -194,7 +200,12 @@ const handler: CustomNextApiHandler = async (body, usernameStatus, query) => {
       },
     });
     if (team) {
-      const organizationId = team.isOrganization ? team.id : (team.parent?.id ?? null);
+      let organizationId: number | null = null;
+      if (team.isOrganization) {
+        organizationId = team.id;
+      } else {
+        organizationId = team.parent?.id ?? null;
+      }
 
       if (username) {
         const existingUserByUsername = await prisma.user.findFirst({
@@ -249,6 +260,7 @@ const handler: CustomNextApiHandler = async (body, usernameStatus, query) => {
       await createOrUpdateMemberships({
         user,
         team,
+        membershipRole: foundToken.membershipRole,
       });
 
       // Accept any child team invites for orgs.

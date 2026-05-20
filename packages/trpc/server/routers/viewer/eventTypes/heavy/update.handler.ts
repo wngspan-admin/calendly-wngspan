@@ -27,8 +27,394 @@ import {
 } from "../util";
 import type { TUpdateInputSchema } from "./update.schema";
 
-const isUrlScanningEnabled = (..._args: unknown[]) => false;
-const updateChildrenEventTypes = async (..._args: unknown[]) => {};
+const _isUrlScanningEnabled = (..._args: unknown[]): boolean => false;
+
+const toNullableJsonInput = (
+  value: Prisma.JsonValue | null
+): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue => {
+  if (value === null) {
+    return Prisma.JsonNull;
+  }
+
+  return value as Prisma.InputJsonValue;
+};
+
+type ManagedParentEventSnapshot = {
+  id: number;
+  schedulingType: SchedulingType | null;
+  title: string;
+  slug: string;
+  description: string | null;
+  length: number;
+  hidden: boolean;
+  locations: Prisma.JsonValue | null;
+  offsetStart: number;
+  metadata: Prisma.JsonValue | null;
+  bookingFields: Prisma.JsonValue | null;
+  periodType: import("@calcom/prisma/enums").PeriodType;
+  periodStartDate: Date | null;
+  periodEndDate: Date | null;
+  periodDays: number | null;
+  periodCountCalendarDays: boolean | null;
+  lockTimeZoneToggleOnBookingPage: boolean;
+  lockedTimeZone: string | null;
+  requiresConfirmation: boolean;
+  requiresConfirmationWillBlockSlot: boolean;
+  requiresConfirmationForFreeEmail: boolean;
+  requiresBookerEmailVerification: boolean;
+  canSendCalVideoTranscriptionEmails: boolean;
+  autoTranslateDescriptionEnabled: boolean;
+  autoTranslateInstantMeetingTitleEnabled: boolean;
+  recurringEvent: Prisma.JsonValue | null;
+  disableGuests: boolean;
+  hideCalendarNotes: boolean;
+  hideCalendarEventDetails: boolean;
+  minimumBookingNotice: number;
+  beforeEventBuffer: number;
+  afterEventBuffer: number;
+  seatsPerTimeSlot: number | null;
+  onlyShowFirstAvailableSlot: boolean;
+  showOptimizedSlots: boolean | null;
+  disableCancelling: boolean | null;
+  disableRescheduling: boolean | null;
+  minimumRescheduleNotice: number | null;
+  seatsShowAttendees: boolean | null;
+  seatsShowAvailabilityCount: boolean | null;
+  allowReschedulingCancelledBookings: boolean | null;
+  price: number;
+  currency: string;
+  slotInterval: number | null;
+  successRedirectUrl: string | null;
+  forwardParamsSuccessRedirect: boolean | null;
+  bookingLimits: Prisma.JsonValue | null;
+  durationLimits: Prisma.JsonValue | null;
+  isInstantEvent: boolean;
+  instantMeetingExpiryTimeOffsetInSeconds: number;
+  instantMeetingParameters: string[];
+  useEventTypeDestinationCalendarEmail: boolean;
+  isRRWeightsEnabled: boolean;
+  maxLeadThreshold: number | null;
+  includeNoShowInRRCalculation: boolean;
+  allowReschedulingPastBookings: boolean;
+  hideOrganizerEmail: boolean;
+  maxActiveBookingsPerBooker: number | null;
+  maxActiveBookingPerBookerOfferReschedule: boolean;
+  customReplyToEmail: string | null;
+  eventTypeColor: Prisma.JsonValue | null;
+  rescheduleWithSameRoundRobinHost: boolean;
+  useBookerTimezone: boolean;
+  bookingRequiresAuthentication: boolean;
+  requiresCancellationReason: import("@calcom/prisma/enums").CancellationReasonRequirement | null;
+  enablePerHostLocations: boolean;
+};
+
+type ManagedChildSelection = NonNullable<TUpdateInputSchema["children"]>[number];
+
+const managedParentSelect: Prisma.EventTypeSelect = {
+  id: true,
+  schedulingType: true,
+  title: true,
+  slug: true,
+  description: true,
+  length: true,
+  hidden: true,
+  locations: true,
+  offsetStart: true,
+  metadata: true,
+  bookingFields: true,
+  periodType: true,
+  periodStartDate: true,
+  periodEndDate: true,
+  periodDays: true,
+  periodCountCalendarDays: true,
+  lockTimeZoneToggleOnBookingPage: true,
+  lockedTimeZone: true,
+  requiresConfirmation: true,
+  requiresConfirmationWillBlockSlot: true,
+  requiresConfirmationForFreeEmail: true,
+  requiresBookerEmailVerification: true,
+  canSendCalVideoTranscriptionEmails: true,
+  autoTranslateDescriptionEnabled: true,
+  autoTranslateInstantMeetingTitleEnabled: true,
+  recurringEvent: true,
+  disableGuests: true,
+  hideCalendarNotes: true,
+  hideCalendarEventDetails: true,
+  minimumBookingNotice: true,
+  beforeEventBuffer: true,
+  afterEventBuffer: true,
+  seatsPerTimeSlot: true,
+  onlyShowFirstAvailableSlot: true,
+  showOptimizedSlots: true,
+  disableCancelling: true,
+  disableRescheduling: true,
+  minimumRescheduleNotice: true,
+  seatsShowAttendees: true,
+  seatsShowAvailabilityCount: true,
+  allowReschedulingCancelledBookings: true,
+  price: true,
+  currency: true,
+  slotInterval: true,
+  successRedirectUrl: true,
+  forwardParamsSuccessRedirect: true,
+  bookingLimits: true,
+  durationLimits: true,
+  isInstantEvent: true,
+  instantMeetingExpiryTimeOffsetInSeconds: true,
+  instantMeetingParameters: true,
+  useEventTypeDestinationCalendarEmail: true,
+  isRRWeightsEnabled: true,
+  maxLeadThreshold: true,
+  includeNoShowInRRCalculation: true,
+  allowReschedulingPastBookings: true,
+  hideOrganizerEmail: true,
+  maxActiveBookingsPerBooker: true,
+  maxActiveBookingPerBookerOfferReschedule: true,
+  customReplyToEmail: true,
+  eventTypeColor: true,
+  rescheduleWithSameRoundRobinHost: true,
+  useBookerTimezone: true,
+  bookingRequiresAuthentication: true,
+  requiresCancellationReason: true,
+  enablePerHostLocations: true,
+} satisfies Prisma.EventTypeSelect;
+
+const buildManagedChildEventData = ({
+  child,
+  parentEvent,
+}: {
+  child: ManagedChildSelection;
+  parentEvent: ManagedParentEventSnapshot;
+}) => {
+  return {
+    title: parentEvent.title,
+    slug: parentEvent.slug,
+    description: parentEvent.description,
+    length: parentEvent.length,
+    hidden: child.hidden,
+    locations: toNullableJsonInput(parentEvent.locations),
+    offsetStart: parentEvent.offsetStart,
+    bookingFields: toNullableJsonInput(parentEvent.bookingFields),
+    periodType: parentEvent.periodType,
+    periodStartDate: parentEvent.periodStartDate,
+    periodEndDate: parentEvent.periodEndDate,
+    periodDays: parentEvent.periodDays,
+    periodCountCalendarDays: parentEvent.periodCountCalendarDays,
+    lockTimeZoneToggleOnBookingPage: parentEvent.lockTimeZoneToggleOnBookingPage,
+    lockedTimeZone: parentEvent.lockedTimeZone,
+    requiresConfirmation: parentEvent.requiresConfirmation,
+    requiresConfirmationWillBlockSlot: parentEvent.requiresConfirmationWillBlockSlot,
+    requiresConfirmationForFreeEmail: parentEvent.requiresConfirmationForFreeEmail,
+    requiresBookerEmailVerification: parentEvent.requiresBookerEmailVerification,
+    canSendCalVideoTranscriptionEmails: parentEvent.canSendCalVideoTranscriptionEmails,
+    autoTranslateDescriptionEnabled: parentEvent.autoTranslateDescriptionEnabled,
+    autoTranslateInstantMeetingTitleEnabled: parentEvent.autoTranslateInstantMeetingTitleEnabled,
+    recurringEvent: toNullableJsonInput(parentEvent.recurringEvent),
+    disableGuests: parentEvent.disableGuests,
+    hideCalendarNotes: parentEvent.hideCalendarNotes,
+    hideCalendarEventDetails: parentEvent.hideCalendarEventDetails,
+    minimumBookingNotice: parentEvent.minimumBookingNotice,
+    beforeEventBuffer: parentEvent.beforeEventBuffer,
+    afterEventBuffer: parentEvent.afterEventBuffer,
+    seatsPerTimeSlot: parentEvent.seatsPerTimeSlot,
+    onlyShowFirstAvailableSlot: parentEvent.onlyShowFirstAvailableSlot,
+    showOptimizedSlots: parentEvent.showOptimizedSlots,
+    disableCancelling: parentEvent.disableCancelling,
+    disableRescheduling: parentEvent.disableRescheduling,
+    minimumRescheduleNotice: parentEvent.minimumRescheduleNotice,
+    seatsShowAttendees: parentEvent.seatsShowAttendees,
+    seatsShowAvailabilityCount: parentEvent.seatsShowAvailabilityCount,
+    allowReschedulingCancelledBookings: parentEvent.allowReschedulingCancelledBookings,
+    price: parentEvent.price,
+    currency: parentEvent.currency,
+    slotInterval: parentEvent.slotInterval,
+    metadata: toNullableJsonInput(parentEvent.metadata),
+    successRedirectUrl: parentEvent.successRedirectUrl,
+    forwardParamsSuccessRedirect: parentEvent.forwardParamsSuccessRedirect,
+    bookingLimits: toNullableJsonInput(parentEvent.bookingLimits),
+    durationLimits: toNullableJsonInput(parentEvent.durationLimits),
+    isInstantEvent: parentEvent.isInstantEvent,
+    instantMeetingExpiryTimeOffsetInSeconds: parentEvent.instantMeetingExpiryTimeOffsetInSeconds,
+    instantMeetingParameters: parentEvent.instantMeetingParameters,
+    assignAllTeamMembers: false,
+    useEventTypeDestinationCalendarEmail: parentEvent.useEventTypeDestinationCalendarEmail,
+    isRRWeightsEnabled: parentEvent.isRRWeightsEnabled,
+    maxLeadThreshold: parentEvent.maxLeadThreshold,
+    includeNoShowInRRCalculation: parentEvent.includeNoShowInRRCalculation,
+    allowReschedulingPastBookings: parentEvent.allowReschedulingPastBookings,
+    hideOrganizerEmail: parentEvent.hideOrganizerEmail,
+    maxActiveBookingsPerBooker: parentEvent.maxActiveBookingsPerBooker,
+    maxActiveBookingPerBookerOfferReschedule: parentEvent.maxActiveBookingPerBookerOfferReschedule,
+    customReplyToEmail: parentEvent.customReplyToEmail,
+    eventTypeColor: toNullableJsonInput(parentEvent.eventTypeColor),
+    rescheduleWithSameRoundRobinHost: parentEvent.rescheduleWithSameRoundRobinHost,
+    useBookerTimezone: parentEvent.useBookerTimezone,
+    bookingRequiresAuthentication: parentEvent.bookingRequiresAuthentication,
+    requiresCancellationReason: parentEvent.requiresCancellationReason,
+    enablePerHostLocations: parentEvent.enablePerHostLocations,
+  } satisfies Prisma.EventTypeCreateInput;
+};
+
+const updateChildrenEventTypes = async ({
+  eventTypeId,
+  oldEventType,
+  updatedEventType,
+  children,
+  prisma,
+  calVideoSettings,
+}: {
+  eventTypeId: number;
+  oldEventType: { schedulingType?: SchedulingType | null };
+  updatedEventType: { schedulingType: SchedulingType | null };
+  children?: TUpdateInputSchema["children"];
+  prisma: PrismaClient;
+  calVideoSettings?: TUpdateInputSchema["calVideoSettings"] | null;
+}): Promise<void> => {
+  const wasManaged = oldEventType.schedulingType === SchedulingType.MANAGED;
+  const isManaged = updatedEventType.schedulingType === SchedulingType.MANAGED;
+
+  if (!wasManaged && !isManaged) {
+    return;
+  }
+
+  const existingChildren = await prisma.eventType.findMany({
+    where: {
+      parentId: eventTypeId,
+    },
+    select: {
+      id: true,
+      userId: true,
+    },
+  });
+
+  if (!isManaged) {
+    if (existingChildren.length > 0) {
+      await prisma.eventType.deleteMany({
+        where: {
+          parentId: eventTypeId,
+        },
+      });
+    }
+    return;
+  }
+
+  const parentEvent = await prisma.eventType.findUniqueOrThrow({
+    where: {
+      id: eventTypeId,
+    },
+    select: managedParentSelect,
+  });
+
+  const targetChildren =
+    children ??
+    existingChildren.flatMap((child) => {
+      if (!child.userId) {
+        return [];
+      }
+
+      return [
+        {
+          hidden: false,
+          owner: {
+            id: child.userId,
+            name: "",
+            email: "",
+            eventTypeSlugs: [],
+          },
+        },
+      ];
+    });
+
+  const targetUserIds = new Set(targetChildren.map((child) => child.owner.id));
+  const existingChildrenByUserId = new Map(
+    existingChildren.flatMap((child) => {
+      if (!child.userId) {
+        return [];
+      }
+
+      return [[child.userId, child] as const];
+    })
+  );
+
+  if (children) {
+    const removedChildIds = existingChildren
+      .filter((child) => child.userId && !targetUserIds.has(child.userId))
+      .map((child) => child.id);
+
+    if (removedChildIds.length > 0) {
+      await prisma.eventType.deleteMany({
+        where: {
+          id: {
+            in: removedChildIds,
+          },
+        },
+      });
+    }
+  }
+
+  for (const child of targetChildren) {
+    const existingChild = existingChildrenByUserId.get(child.owner.id);
+    const childData = buildManagedChildEventData({
+      child,
+      parentEvent,
+    });
+
+    if (existingChild) {
+      await prisma.eventType.update({
+        where: {
+          id: existingChild.id,
+        },
+        data: childData,
+      });
+    } else {
+      await prisma.eventType.create({
+        data: {
+          ...childData,
+          parent: {
+            connect: {
+              id: parentEvent.id,
+            },
+          },
+          owner: {
+            connect: {
+              id: child.owner.id,
+            },
+          },
+          users: {
+            connect: {
+              id: child.owner.id,
+            },
+          },
+        },
+      });
+    }
+
+    if (calVideoSettings !== undefined) {
+      const childEvent = await prisma.eventType.findUnique({
+        where: {
+          userId_parentId: {
+            userId: child.owner.id,
+            parentId: eventTypeId,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (childEvent) {
+        if (calVideoSettings === null) {
+          await CalVideoSettingsRepository.deleteCalVideoSettings(childEvent.id);
+        } else {
+          await CalVideoSettingsRepository.createOrUpdateCalVideoSettings({
+            eventTypeId: childEvent.id,
+            calVideoSettings,
+          });
+        }
+      }
+    }
+  }
+};
 const allowDisablingHostConfirmationEmails = (..._args: unknown[]): boolean => false;
 const allowDisablingAttendeeConfirmationEmails = (..._args: unknown[]): boolean => false;
 
@@ -98,6 +484,7 @@ export const updateHandler = async ({ ctx, input }: UpdateOptions) => {
   const eventType = await ctx.prisma.eventType.findUniqueOrThrow({
     where: { id },
     select: {
+      schedulingType: true,
       title: true,
       locations: true,
       description: true,
@@ -746,13 +1133,10 @@ export const updateHandler = async ({ ctx, input }: UpdateOptions) => {
   // Handling updates to children event types (managed events types)
   await updateChildrenEventTypes({
     eventTypeId: id,
-    currentUserId: ctx.user.id,
     oldEventType: eventType,
     updatedEventType,
     children,
-    profileId: ctx.user.profile.id,
     prisma: ctx.prisma,
-    updatedValues,
     calVideoSettings: calVideoSettingsForChildren,
   });
 
@@ -779,3 +1163,5 @@ export const updateHandler = async ({ ctx, input }: UpdateOptions) => {
   }
   return { eventType };
 };
+
+export { buildManagedChildEventData, updateChildrenEventTypes };

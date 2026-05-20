@@ -528,6 +528,68 @@ async function ensureAcmeOwnerHasApiKeySeeded() {
   }
 }
 
+async function seedAdminReviewFixtures(adminUser: User) {
+  const existingTeam = await prisma.team.findFirst({
+    where: {
+      slug: "admin-review-team",
+      parentId: null,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!existingTeam) {
+    await prisma.team.create({
+      data: {
+        name: "Admin Review Team",
+        slug: "admin-review-team",
+        members: {
+          create: {
+            userId: adminUser.id,
+            role: MembershipRole.OWNER,
+            accepted: true,
+          },
+        },
+      },
+    });
+  }
+
+  const existingOrg = await prisma.team.findFirst({
+    where: {
+      slug: "admin-review-org",
+      parentId: null,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!existingOrg) {
+    await prisma.team.create({
+      data: {
+        name: "Admin Review Org",
+        slug: "admin-review-org",
+        isOrganization: true,
+        members: {
+          create: {
+            userId: adminUser.id,
+            role: MembershipRole.OWNER,
+            accepted: true,
+          },
+        },
+        organizationSettings: {
+          create: {
+            isOrganizationConfigured: true,
+            isOrganizationVerified: true,
+            orgAutoAcceptEmail: "admin-review.example.com",
+          },
+        },
+      },
+    });
+  }
+}
+
 async function seedPerHostLocationsInAcmeOrg() {
   const acmeOrg = await prisma.team.findFirst({
     where: { slug: "acme", parentId: null },
@@ -1026,6 +1088,8 @@ async function main() {
       enablePkce: false,
     });
   }
+
+  await seedAdminReviewFixtures(admin);
 
   if (process.env.E2E_TEST_CALCOM_QA_EMAIL && process.env.E2E_TEST_CALCOM_QA_PASSWORD) {
     await createUserAndEventType({

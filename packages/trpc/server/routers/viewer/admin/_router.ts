@@ -13,13 +13,18 @@ import { toggleFeatureFlag } from "./toggleFeatureFlag.procedure";
 import { ZAdminUnassignFeatureFromTeamSchema } from "./unassignFeatureFromTeam.schema";
 import { watchlistRouter } from "./watchlist/_router";
 
-const NAMESPACE = "admin";
-
-const namespaced = (s: string) => `${NAMESPACE}.${s}`;
-
+// biome-ignore lint/nursery/useExplicitType: explicit router annotations widen incorrectly and break tRPC inference here.
 export const adminRouter = router({
   listPaginated: authedAdminProcedure.input(ZListMembersSchema).query(async (opts) => {
     const { default: handler } = await import("./listPaginated.handler");
+    return handler(opts);
+  }),
+  listTeams: authedAdminProcedure.query(async (opts) => {
+    const { default: handler } = await import("./listTeams.handler");
+    return handler(opts);
+  }),
+  listOrganizations: authedAdminProcedure.query(async (opts) => {
+    const { default: handler } = await import("./listOrganizations.handler");
     return handler(opts);
   }),
   sendPasswordReset: authedAdminProcedure.input(ZAdminPasswordResetSchema).mutation(async (opts) => {

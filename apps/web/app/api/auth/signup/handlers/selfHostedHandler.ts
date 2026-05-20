@@ -11,17 +11,16 @@ import {
 } from "@calcom/features/auth/signup/utils/token";
 import { validateAndGetCorrectedUsernameAndEmail } from "@calcom/features/auth/signup/utils/validateUsername";
 import { hashPassword } from "@calcom/lib/auth/hashPassword";
-
 import logger from "@calcom/lib/logger";
 import { isPrismaError } from "@calcom/lib/server/getServerErrorFromUnknown";
 import { isUsernameReservedDueToMigration } from "@calcom/lib/server/username";
 import slugify from "@calcom/lib/slugify";
 import prisma from "@calcom/prisma";
-import { IdentityProvider } from "@calcom/prisma/enums";
+import { IdentityProvider, type MembershipRole } from "@calcom/prisma/enums";
 import { signupSchema } from "@calcom/prisma/zod-utils";
 import { NextResponse } from "next/server";
 
-export default async function handler(body: Record<string, string>) {
+export default async function handler(body: Record<string, string>): Promise<Response> {
   const { email, password, language, token } = signupSchema.parse(body);
 
   const username = slugify(body.username);
@@ -31,7 +30,12 @@ export default async function handler(body: Record<string, string>) {
     return NextResponse.json({ message: "Invalid username" }, { status: 422 });
   }
 
-  let foundToken: { id: number; teamId: number | null; expires: Date } | null = null;
+  let foundToken: {
+    id: number;
+    teamId: number | null;
+    expires: Date;
+    membershipRole: MembershipRole | null;
+  } | null = null;
   let correctedUsername = username;
   if (token) {
     foundToken = await findTokenByToken({ token });
@@ -98,7 +102,12 @@ export default async function handler(body: Record<string, string>) {
         }
       }
 
-      const organizationId = team.isOrganization ? team.id : (team.parent?.id ?? null);
+      let organizationId: number | null = null;
+      if (team.isOrganization) {
+        organizationId = team.id;
+      } else {
+        organizationId = team.parent?.id ?? null;
+      }
 
       const existingUserByUsername = await prisma.user.findFirst({
         where: {
@@ -151,6 +160,7 @@ export default async function handler(body: Record<string, string>) {
       await createOrUpdateMemberships({
         user,
         team,
+        membershipRole: foundToken.membershipRole,
       });
 
       // Accept any child team invites for orgs.

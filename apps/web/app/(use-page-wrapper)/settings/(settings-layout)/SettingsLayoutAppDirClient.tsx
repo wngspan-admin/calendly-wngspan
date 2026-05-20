@@ -98,6 +98,18 @@ const getTabs = (
       ],
     },
     {
+      name: "teams",
+      href: "/settings/teams",
+      icon: "users",
+      children: [
+        {
+          name: "my_teams",
+          href: "/settings/teams",
+          trackingMetadata: { section: "teams", page: "list" },
+        },
+      ],
+    },
+    {
       name: "developer",
       href: "/settings/developer",
       icon: "terminal",
