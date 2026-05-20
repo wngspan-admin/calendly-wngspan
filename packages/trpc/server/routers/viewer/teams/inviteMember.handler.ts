@@ -36,11 +36,11 @@ export const inviteMemberHandler = async ({ ctx, input }: InviteMemberHandlerOpt
     const token = randomUUID();
     await prisma.verificationToken.create({
       data: {
-        // Encode role in identifier so it can be recovered during signup
-        identifier: `team-invite:${input.role}:${input.email}`,
+        identifier: input.email,
         token,
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         teamId: input.teamId,
+        membershipRole: input.role as MembershipRole,
       },
     });
 
