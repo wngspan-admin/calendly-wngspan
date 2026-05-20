@@ -12,12 +12,14 @@ type ParentTeamData = {
 export const createOrUpdateMemberships = async ({
   user,
   team,
+  role = MembershipRole.MEMBER,
 }: {
   user: Pick<User, "id">;
   team: Pick<Team, "id" | "parentId" | "isOrganization"> & {
     organizationSettings?: Pick<OrganizationSettings, "orgAutoAcceptEmail"> | null;
     parent?: ParentTeamData | null;
   };
+  role?: MembershipRole;
 }) => {
   return await prisma.$transaction(async (tx) => {
     // Determine the organization context - either the team itself (if it's an org) or its parent
@@ -69,7 +71,7 @@ export const createOrUpdateMemberships = async ({
       create: {
         userId: user.id,
         teamId: team.id,
-        role: MembershipRole.MEMBER,
+        role,
         accepted: true,
       },
     });

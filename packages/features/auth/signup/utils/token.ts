@@ -2,6 +2,7 @@ import dayjs from "@calcom/dayjs";
 import { validateAndGetCorrectedUsernameInTeam } from "@calcom/features/auth/signup/utils/validateUsername";
 import { HttpError } from "@calcom/lib/http-error";
 import { prisma } from "@calcom/prisma";
+import type { MembershipRole } from "@calcom/prisma/enums";
 
 export async function findTokenByToken({ token }: { token: string }) {
   const foundToken = await prisma.verificationToken.findUnique({
@@ -12,6 +13,7 @@ export async function findTokenByToken({ token }: { token: string }) {
       id: true,
       expires: true,
       teamId: true,
+      identifier: true,
     },
   });
 
@@ -62,4 +64,15 @@ export async function validateAndGetCorrectedUsernameForTeam({
     });
   }
   return teamUserValidation.username;
+}
+
+/**
+ * Extracts the MembershipRole from a team-invite VerificationToken identifier.
+ * Identifier format: "team-invite:ROLE:email@example.com"
+ * Returns null for any other identifier format (non-team-invite tokens).
+ */
+export function extractTeamInviteRole(identifier: string): MembershipRole | null {
+  const match = /^team-invite:(MEMBER|ADMIN|OWNER):/.exec(identifier);
+  if (!match) return null;
+  return match[1] as MembershipRole;
 }

@@ -5,13 +5,13 @@ import { createOrUpdateMemberships } from "@calcom/features/auth/signup/utils/cr
 import { joinAnyChildTeamOnOrgInvite } from "@calcom/features/auth/signup/utils/organization";
 import { prefillAvatar } from "@calcom/features/auth/signup/utils/prefillAvatar";
 import {
+  extractTeamInviteRole,
   findTokenByToken,
   throwIfTokenExpired,
   validateAndGetCorrectedUsernameForTeam,
 } from "@calcom/features/auth/signup/utils/token";
 import { validateAndGetCorrectedUsernameAndEmail } from "@calcom/features/auth/signup/utils/validateUsername";
 import { hashPassword } from "@calcom/lib/auth/hashPassword";
-
 import logger from "@calcom/lib/logger";
 import { isPrismaError } from "@calcom/lib/server/getServerErrorFromUnknown";
 import { isUsernameReservedDueToMigration } from "@calcom/lib/server/username";
@@ -148,9 +148,14 @@ export default async function handler(body: Record<string, string>) {
         throw error;
       }
 
+      const inviteRole = foundToken.identifier
+        ? (extractTeamInviteRole(foundToken.identifier) ?? undefined)
+        : undefined;
+
       await createOrUpdateMemberships({
         user,
         team,
+        ...(inviteRole ? { role: inviteRole } : {}),
       });
 
       // Accept any child team invites for orgs.
