@@ -23,6 +23,7 @@ import { meRouter } from "./me/_router";
 import { oAuthRouter } from "./oAuth/_router";
 import { oooRouter } from "./ooo/_router";
 import { organizationsRouter } from "./organizations/_router";
+import { rolesRouter } from "./roles/_router";
 import { slotsRouter } from "./slots/_router";
 import { teamsRouter } from "./teams/_router";
 import { travelSchedulesRouter } from "./travelSchedules/_router";
@@ -58,6 +59,7 @@ export const viewerRouter = router({
   ooo: oooRouter,
   holidays: holidaysRouter,
   travelSchedules: travelSchedulesRouter,
+  roles: rolesRouter,
   teams: teamsRouter,
   organizations: organizationsRouter,
 });

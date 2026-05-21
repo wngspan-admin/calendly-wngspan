@@ -2,14 +2,15 @@ import authedProcedure from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
 import { ZCreateOrgInputSchema } from "./create.schema";
 import { ZGetOrgInputSchema } from "./get.schema";
-import { ZUpdateOrgInputSchema } from "./update.schema";
 import {
   ZBulkChangeOrgMemberRoleInputSchema,
   ZBulkRemoveOrgMembersInputSchema,
   ZChangeOrgMemberRoleInputSchema,
   ZGetOrgMembersInputSchema,
+  ZInviteOrgMemberInputSchema,
   ZRemoveOrgMemberInputSchema,
 } from "./members.schema";
+import { ZUpdateOrgInputSchema } from "./update.schema";
 
 export const organizationsRouter = router({
   create: authedProcedure.input(ZCreateOrgInputSchema).mutation(async ({ ctx, input }) => {
@@ -30,6 +31,11 @@ export const organizationsRouter = router({
   update: authedProcedure.input(ZUpdateOrgInputSchema).mutation(async ({ ctx, input }) => {
     const { updateOrganizationHandler } = await import("./update.handler");
     return updateOrganizationHandler({ ctx, input });
+  }),
+
+  inviteMember: authedProcedure.input(ZInviteOrgMemberInputSchema).mutation(async ({ ctx, input }) => {
+    const { inviteOrganizationMemberHandler } = await import("./members.handler");
+    return inviteOrganizationMemberHandler({ ctx, input });
   }),
 
   getMembers: authedProcedure.input(ZGetOrgMembersInputSchema).query(async ({ ctx, input }) => {

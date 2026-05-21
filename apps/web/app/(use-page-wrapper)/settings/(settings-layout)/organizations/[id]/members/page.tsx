@@ -19,7 +19,7 @@ const ROLE_OPTIONS: RoleOption[] = [
 ];
 
 const roleOrder = [MembershipRole.MEMBER, MembershipRole.ADMIN, MembershipRole.OWNER];
-function canManage(actorRole: MembershipRole | undefined, targetRole: MembershipRole): boolean {
+function _canManage(actorRole: MembershipRole | undefined, targetRole: MembershipRole): boolean {
   if (!actorRole) return false;
   return roleOrder.indexOf(actorRole) >= roleOrder.indexOf(targetRole);
 }
@@ -36,12 +36,13 @@ export default function OrganizationMembersPage() {
 
   const { data: org } = trpc.viewer.organizations.list.useQuery();
   const currentOrg = org?.find((o) => o.id === organizationId);
-  const actorRole = currentOrg
-    ? (currentOrg as { id: number; members?: Array<{ role: MembershipRole; user: { id: number } }> })
-        .members?.find(
-          (m: { role: MembershipRole; user: { id: number } }) =>
-            (m as { user: { id: number } }).user.id === organizationId
-        )?.role
+  const _actorRole = currentOrg
+    ? (
+        currentOrg as { id: number; members?: Array<{ role: MembershipRole; user: { id: number } }> }
+      ).members?.find(
+        (m: { role: MembershipRole; user: { id: number } }) =>
+          (m as { user: { id: number } }).user.id === organizationId
+      )?.role
     : undefined;
 
   const { data: members, isLoading } = trpc.viewer.organizations.getMembers.useQuery(
@@ -53,17 +54,14 @@ export default function OrganizationMembersPage() {
     await utils.viewer.organizations.getMembers.invalidate({ organizationId });
   };
 
-  const inviteMutation = trpc.viewer.organizations.inviteMember
-    ? // @ts-expect-error — inviteMember may not be wired yet in staging
-      trpc.viewer.organizations.inviteMember.useMutation({
-        onSuccess: async () => {
-          await invalidate();
-          setInviteEmail("");
-          showToast("Member invited successfully", "success");
-        },
-        onError: (err: { message: string }) => showToast(err.message, "error"),
-      })
-    : null;
+  const inviteMutation = trpc.viewer.organizations.inviteMember.useMutation({
+    onSuccess: async () => {
+      await invalidate();
+      setInviteEmail("");
+      showToast("Member invited successfully", "success");
+    },
+    onError: (err) => showToast(err.message, "error"),
+  });
 
   const removeMutation = trpc.viewer.organizations.removeMember.useMutation({
     onSuccess: async () => {
@@ -124,12 +122,12 @@ export default function OrganizationMembersPage() {
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-emphasis">Members</h1>
+          <h1 className="font-bold text-2xl text-emphasis">Members</h1>
           <p className="mt-1 text-default text-sm">{currentOrg?.name ?? `Organization #${organizationId}`}</p>
         </div>
         <Link
           href={`/settings/organizations/${organizationId}`}
-          className="text-sm font-medium text-default hover:text-emphasis">
+          className="font-medium text-default text-sm hover:text-emphasis">
           Back to org
         </Link>
       </div>
@@ -145,7 +143,7 @@ export default function OrganizationMembersPage() {
             onChange={(e) => setInviteEmail(e.target.value)}
           />
           <div>
-            <label className="mb-2 block text-sm font-medium text-emphasis">Role</label>
+            <label className="mb-2 block font-medium text-emphasis text-sm">Role</label>
             <Select<RoleOption>
               options={ROLE_OPTIONS}
               value={ROLE_OPTIONS.find((o) => o.value === inviteRole)}
@@ -156,10 +154,8 @@ export default function OrganizationMembersPage() {
             <Button
               className="w-full sm:w-auto"
               disabled={!inviteEmail.trim()}
-              onClick={() => {
-                // inviteMember not yet wired in all environments — show placeholder toast
-                showToast("Invite sent (feature coming soon)", "success");
-              }}>
+              loading={inviteMutation.isPending}
+              onClick={() => inviteMutation.mutate({ organizationId, email: inviteEmail, role: inviteRole })}>
               Invite
             </Button>
           </div>
@@ -169,7 +165,7 @@ export default function OrganizationMembersPage() {
       {/* Bulk action toolbar */}
       {selectedCount > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-subtle bg-subtle p-3">
-          <span className="text-sm font-medium text-emphasis">{selectedCount} selected</span>
+          <span className="font-medium text-emphasis text-sm">{selectedCount} selected</span>
           <div className="flex items-center gap-2">
             <Select<RoleOption>
               size="sm"
@@ -215,14 +211,14 @@ export default function OrganizationMembersPage() {
         {!isLoading && members && members.length > 0 && (
           <>
             {/* Select all header */}
-            <div className="flex items-center gap-3 border-b border-subtle px-4 py-2">
+            <div className="flex items-center gap-3 border-subtle border-b px-4 py-2">
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={toggleSelectAll}
                 className="rounded border-default"
               />
-              <span className="text-xs font-medium text-muted">Select all</span>
+              <span className="font-medium text-muted text-xs">Select all</span>
             </div>
             <ul className="divide-y divide-subtle">
               {members.map((member) => (
@@ -243,12 +239,12 @@ export default function OrganizationMembersPage() {
                     />
                     <div>
                       <p className="font-medium text-emphasis">{member.user.name || member.user.email}</p>
-                      <p className="text-sm text-default">{member.user.email}</p>
+                      <p className="text-default text-sm">{member.user.email}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {!member.accepted && (
-                      <span className="rounded-full bg-subtle px-2 py-0.5 text-xs font-medium text-default">
+                      <span className="rounded-full bg-subtle px-2 py-0.5 font-medium text-default text-xs">
                         Pending
                       </span>
                     )}
@@ -273,9 +269,7 @@ export default function OrganizationMembersPage() {
                       loading={
                         removeMutation.isPending && removeMutation.variables?.memberId === member.user.id
                       }
-                      onClick={() =>
-                        removeMutation.mutate({ organizationId, memberId: member.user.id })
-                      }>
+                      onClick={() => removeMutation.mutate({ organizationId, memberId: member.user.id })}>
                       Remove
                     </Button>
                   </div>
@@ -288,7 +282,7 @@ export default function OrganizationMembersPage() {
         {!isLoading && (!members || members.length === 0) && (
           <div className="p-8 text-center">
             <p className="font-medium text-emphasis">No members yet</p>
-            <p className="mt-1 text-sm text-default">Invite someone to get started.</p>
+            <p className="mt-1 text-default text-sm">Invite someone to get started.</p>
           </div>
         )}
       </div>

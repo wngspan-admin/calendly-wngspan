@@ -3,12 +3,22 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type PageProps = {
-  params: Promise<{ slug: string; type: string }>;
+  params: Promise<{ orgSlug: string; teamSlug: string; type: string }>;
 };
 
 export const generateMetadata = async ({ params }: PageProps): Promise<Metadata> => {
-  const { slug, type } = await params;
-  const team = await prisma.team.findFirst({ where: { slug, isOrganization: false } });
+  const { orgSlug, teamSlug, type } = await params;
+
+  const org = await prisma.team.findFirst({
+    where: { slug: orgSlug, isOrganization: true },
+    select: { id: true, name: true },
+  });
+  if (!org) return { title: "Not Found" };
+
+  const team = await prisma.team.findFirst({
+    where: { slug: teamSlug, parentId: org.id },
+    select: { id: true, name: true },
+  });
   if (!team) return { title: "Not Found" };
 
   const eventType = await prisma.eventType.findFirst({
@@ -16,14 +26,21 @@ export const generateMetadata = async ({ params }: PageProps): Promise<Metadata>
     select: { title: true },
   });
 
-  return { title: eventType ? `${eventType.title} | ${team.name}` : team.name };
+  return { title: eventType ? `${eventType.title} | ${team.name} — ${org.name}` : team.name };
 };
 
-export default async function TeamEventTypePage({ params }: PageProps) {
-  const { slug, type } = await params;
+export default async function OrgTeamEventTypePage({ params }: PageProps) {
+  const { orgSlug, teamSlug, type } = await params;
+
+  const org = await prisma.team.findFirst({
+    where: { slug: orgSlug, isOrganization: true },
+    select: { id: true, name: true, slug: true },
+  });
+
+  if (!org) notFound();
 
   const team = await prisma.team.findFirst({
-    where: { slug, isOrganization: false },
+    where: { slug: teamSlug, parentId: org.id },
     select: { id: true, name: true, slug: true },
   });
 
@@ -52,6 +69,7 @@ export default async function TeamEventTypePage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <div className="rounded-lg border border-subtle bg-default p-8">
+        <p className="text-subtle text-xs">{org.name}</p>
         <p className="text-default text-sm">{team.name}</p>
         <h1 className="mt-1 font-semibold text-2xl text-emphasis">{eventType.title}</h1>
         {eventType.description && <p className="mt-2 text-default text-sm">{eventType.description}</p>}
