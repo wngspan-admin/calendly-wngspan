@@ -1,13 +1,17 @@
+import { randomUUID } from "node:crypto";
+import { sendTeamInviteEmail } from "@calcom/emails/organization-email-service";
+import { getTranslation } from "@calcom/i18n/server";
+import { WEBAPP_URL } from "@calcom/lib/constants";
 import prisma from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { TRPCError } from "@trpc/server";
-
 import type { TrpcSessionUser } from "../../../types";
 import type {
   TBulkChangeOrgMemberRoleInputSchema,
   TBulkRemoveOrgMembersInputSchema,
   TChangeOrgMemberRoleInputSchema,
   TGetOrgMembersInputSchema,
+  TInviteOrgMemberInputSchema,
   TRemoveOrgMemberInputSchema,
 } from "./members.schema";
 
@@ -29,6 +33,85 @@ async function assertOrgMembership(userId: number, organizationId: number, minRo
   }
   return membership.role;
 }
+
+export const inviteOrganizationMemberHandler = async ({
+  ctx,
+  input,
+}: {
+  ctx: Ctx & { user: Pick<NonNullable<TrpcSessionUser>, "id" | "name" | "email"> };
+  input: TInviteOrgMemberInputSchema;
+}) => {
+  await assertOrgMembership(ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+
+  const org = await prisma.team.findUniqueOrThrow({
+    where: { id: input.organizationId },
+    select: { name: true, isOrganization: true },
+  });
+
+  const invitee = await prisma.user.findUnique({
+    where: { email: input.email },
+    select: { id: true, locale: true },
+  });
+
+  const t = await getTranslation(invitee?.locale ?? "en", "common");
+  const joinLink = `${WEBAPP_URL}/settings/teams/${input.organizationId}/accept`;
+
+  if (!invitee) {
+    const token = randomUUID();
+    await prisma.verificationToken.create({
+      data: {
+        identifier: input.email,
+        token,
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        teamId: input.organizationId,
+        membershipRole: input.role,
+      },
+    });
+
+    await sendTeamInviteEmail({
+      language: t,
+      from: ctx.user.name ?? ctx.user.email,
+      to: input.email,
+      teamName: org.name,
+      joinLink: `${WEBAPP_URL}/auth/signup?token=${token}&email=${encodeURIComponent(input.email)}`,
+      isCalcomMember: false,
+      isAutoJoin: false,
+      isOrg: true,
+      parentTeamName: undefined,
+      isExistingUserMovedToOrg: false,
+      prevLink: null,
+      newLink: null,
+    });
+
+    return { status: "invited", email: input.email };
+  }
+
+  const existing = await prisma.membership.findUnique({
+    where: { userId_teamId: { userId: invitee.id, teamId: input.organizationId } },
+  });
+  if (existing) throw new TRPCError({ code: "BAD_REQUEST", message: "User is already a member" });
+
+  await prisma.membership.create({
+    data: { teamId: input.organizationId, userId: invitee.id, role: input.role, accepted: false },
+  });
+
+  await sendTeamInviteEmail({
+    language: t,
+    from: ctx.user.name ?? ctx.user.email,
+    to: input.email,
+    teamName: org.name,
+    joinLink,
+    isCalcomMember: true,
+    isAutoJoin: false,
+    isOrg: true,
+    parentTeamName: undefined,
+    isExistingUserMovedToOrg: false,
+    prevLink: null,
+    newLink: null,
+  });
+
+  return { status: "invited", email: input.email };
+};
 
 export const getOrganizationMembersHandler = async ({
   ctx,
