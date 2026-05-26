@@ -1,3 +1,4 @@
+import { Resend } from "resend";
 import type SendmailTransport from "nodemailer/lib/sendmail-transport";
 import type SMTPConnection from "nodemailer/lib/smtp-connection";
 
@@ -5,21 +6,10 @@ import { isENVDev } from "@calcom/lib/env";
 
 import { getAdditionalEmailHeaders } from "./getAdditionalEmailHeaders";
 
+// SDK client — takes priority over SMTP when RESEND_API_KEY is set
+export const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
 function detectTransport(): SendmailTransport.Options | SMTPConnection.Options | string {
-  if (process.env.RESEND_API_KEY) {
-    const transport = {
-      host: "smtp.resend.com",
-      secure: true,
-      port: 465,
-      auth: {
-        user: "resend",
-        pass: process.env.RESEND_API_KEY,
-      },
-    };
-
-    return transport;
-  }
-
   if (process.env.EMAIL_SERVER) {
     return process.env.EMAIL_SERVER;
   }
@@ -34,7 +24,7 @@ function detectTransport(): SendmailTransport.Options | SMTPConnection.Options |
           }
         : undefined;
 
-    const transport = {
+    return {
       host: process.env.EMAIL_SERVER_HOST,
       port,
       auth,
@@ -43,8 +33,6 @@ function detectTransport(): SendmailTransport.Options | SMTPConnection.Options |
         rejectUnauthorized: !isENVDev,
       },
     };
-
-    return transport;
   }
 
   return {
