@@ -1,7 +1,7 @@
 {
-    "name": "Cal.diy",
-    "short_name": "Cal.diy",
-    "description": "Scheduling infrastructure for absolutely everyone.",
+    "name": "WNGSPAN",
+    "short_name": "WNGSPAN",
+    "description": "Scheduling made simple for everyone.",
     "icons": [
         {
             "src": "/api/logo?type=android-chrome-192",
