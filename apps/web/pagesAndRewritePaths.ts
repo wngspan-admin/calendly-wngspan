@@ -1,5 +1,4 @@
 import { sync as globSync } from "glob";
-
 import { nextJsOrgRewriteConfig } from "./getNextjsOrgRewriteConfig";
 
 // Top-level route names that are explicitly allowed for org rewrite (whitelist)
@@ -35,8 +34,8 @@ export const topLevelRoutesExcludedFromOrgRewrite: string[] = globSync(
       // Remove file extensions
       .replace(/(\.tsx|\.js|\.ts)/, "")
       // Extract only the top-level route name (e.g., /abc/def -> abc)
-      .replace(/\/.*/, "");
-  })
+      .replace(/\/.*/, "")
+  )
   .filter(
     (v, i, self) =>
       self.indexOf(v) === i &&
