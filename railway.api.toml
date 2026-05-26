@@ -7,7 +7,7 @@ DATABASE_URL = "${{DATABASE_URL}}"
 DATABASE_DIRECT_URL = "${{DATABASE_URL}}"
 
 [deploy]
-healthcheckPath = "/api/v2/health"
+healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
