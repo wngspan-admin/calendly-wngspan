@@ -68,8 +68,8 @@ export const metadata = {
     "application-TileColor": "#ff0000",
   },
   twitter: {
-    site: "@calcom",
-    creator: "@calcom",
+    site: "@wngspan",
+    creator: "@wngspan",
     card: "summary_large_image",
   },
   robots: {

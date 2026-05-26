@@ -34,12 +34,12 @@ export const WEBAPP_URL_FOR_OAUTH = IS_PRODUCTION || IS_DEV ? WEBAPP_URL : "http
 
 /** @deprecated use `WEBAPP_URL` */
 export const BASE_URL = WEBAPP_URL;
-export const WEBSITE_URL = ensureProtocol(process.env.NEXT_PUBLIC_WEBSITE_URL) || "https://cal.com";
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Cal.diy";
-export const SUPPORT_MAIL_ADDRESS = process.env.NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS || "help@cal.com";
-export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Cal.com, Inc.";
-export const SENDER_ID = process.env.NEXT_PUBLIC_SENDER_ID || "Cal";
-export const SENDER_NAME = process.env.NEXT_PUBLIC_SENDGRID_SENDER_NAME || "Cal.diy";
+export const WEBSITE_URL = ensureProtocol(process.env.NEXT_PUBLIC_WEBSITE_URL) || "https://wngspan.com";
+export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "WNGSPAN";
+export const SUPPORT_MAIL_ADDRESS = process.env.NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS || "help@wngspan.com";
+export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "WNGSPAN, Inc.";
+export const SENDER_ID = process.env.NEXT_PUBLIC_SENDER_ID || "WNGSPAN";
+export const SENDER_NAME = process.env.NEXT_PUBLIC_SENDGRID_SENDER_NAME || "WNGSPAN";
 export const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
 
 // This is the URL from which all Cal Links and their assets are served.
@@ -98,9 +98,9 @@ export const PUBLIC_QUICK_AVAILABILITY_ROLLOUT =
 
 /** @deprecated use `WEBAPP_URL` */
 export const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || `https://${process.env.VERCEL_URL}`;
-export const LOGO = "/calcom-logo-white-word.svg";
-export const LOGO_DARK = "/cal-logo-word-black.svg";
-export const LOGO_ICON = "/cal-com-icon-white.svg";
+export const LOGO = "/wngspan-logo-white.png";
+export const LOGO_DARK = "/wngspan-logo-dark.png";
+export const LOGO_ICON = "/wngspan-icon-source.jpg";
 export const AVATAR_FALLBACK = "/avatar.svg";
 export const FAVICON_16 = "/favicon-16x16.png";
 export const FAVICON_32 = "/favicon-32x32.png";
@@ -108,12 +108,12 @@ export const APPLE_TOUCH_ICON = "/apple-touch-icon.png";
 export const MSTILE_ICON = "/mstile-150x150.png";
 export const ANDROID_CHROME_ICON_192 = "/android-chrome-192x192.png";
 export const ANDROID_CHROME_ICON_256 = "/android-chrome-256x256.png";
-export const ROADMAP = "https://cal.com/roadmap";
-export const DESKTOP_APP_LINK = "https://cal.com/download";
-export const JOIN_COMMUNITY = "https://github.com/calcom/cal.diy/discussions";
-export const POWERED_BY_URL = "https://go.cal.com/booking";
-export const DOCS_URL = "https://cal.com/docs";
-export const DEVELOPER_DOCS = "https://developer.cal.com";
+export const ROADMAP = "https://wngspan.com/roadmap";
+export const DESKTOP_APP_LINK = "https://wngspan.com/download";
+export const JOIN_COMMUNITY = "https://wngspan.com/community";
+export const POWERED_BY_URL = "https://wngspan.com";
+export const DOCS_URL = process.env.DOCS_URL || "https://wngspan.com/docs";
+export const DEVELOPER_DOCS = "https://wngspan.com/docs/api";
 export const SEO_IMG_DEFAULT = `${CAL_URL}/og-image.png`;
 // The Dynamic OG Image is passed through Next's Image API to further optimize it.
 // This results in a 80% smaller image 🤯. It is however important that for the query
