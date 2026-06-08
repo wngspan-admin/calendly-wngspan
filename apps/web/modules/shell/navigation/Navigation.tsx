@@ -113,7 +113,7 @@ const MobileNavigation = () => {
     <>
       <nav
         className={classNames(
-          "fixed bottom-0 left-0 z-30 pwa:-mx-2 flex w-full border-subtle border-t bg-cal-muted/40 px-1 pwa:pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow backdrop-blur-md md:hidden",
+          "fixed bottom-0 left-0 z-30 pwa:-mx-2 flex w-full border-[#e7defc] border-t bg-[#faf8ff]/90 px-1 pwa:pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-xl md:hidden dark:border-[#332653] dark:bg-[#171122]/90",
           isEmbed && "hidden"
         )}>
         {mobileNavigationBottomItems.map((item) => (
