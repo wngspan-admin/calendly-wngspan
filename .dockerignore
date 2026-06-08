@@ -34,3 +34,6 @@ Thumbs.db
 
 # Examples and docs
 docs
+
+# Source brand assets (processed copies are in apps/web/public/)
+wngspan_logos

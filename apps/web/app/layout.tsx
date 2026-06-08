@@ -67,6 +67,8 @@ export const metadata = {
     "application-TileColor": WNGSPAN_BRAND.colors.primary,
   },
   twitter: {
+    site: "@wngspan",
+    creator: "@wngspan",
     card: "summary_large_image",
   },
   robots: {

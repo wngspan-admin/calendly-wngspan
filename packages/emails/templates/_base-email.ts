@@ -29,6 +29,7 @@ export default class BaseEmail {
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {
     return {};
   }
+
   public async sendEmail() {
     const featuresRepository = new FeaturesRepository(prisma);
     const emailsDisabled = await featuresRepository.checkIfFeatureIsEnabledGlobally("emails");
@@ -60,7 +61,6 @@ export default class BaseEmail {
 
     const sanitizedFrom = sanitizeDisplayName(from);
     const sanitizedTo = sanitizeDisplayName(to);
-
     const parseSubject = z.string().safeParse(payload?.subject);
     const subject = parseSubject.success ? decodeHTML(parseSubject.data) : "";
 
@@ -133,6 +133,7 @@ export default class BaseEmail {
     );
     return new Promise((resolve) => resolve("send mail async"));
   }
+
   protected getMailerOptions() {
     return {
       transport: serverConfig.transport,
@@ -140,6 +141,7 @@ export default class BaseEmail {
       headers: serverConfig.headers,
     };
   }
+
   protected printNodeMailerError(error: Error): void {
     /** Don't clog the logs with unsent emails in E2E */
     if (process.env.NEXT_PUBLIC_IS_E2E) return;
