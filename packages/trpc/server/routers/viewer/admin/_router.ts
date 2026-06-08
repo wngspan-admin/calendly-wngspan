@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { authedAdminProcedure } from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
 import { ZAdminAssignFeatureToTeamSchema } from "./assignFeatureToTeam.schema";
@@ -77,5 +78,15 @@ export const adminRouter = router({
     const { default: handler } = await import("./updateOrganization.handler");
     return handler(opts);
   }),
+  deleteTeam: authedAdminProcedure.input(z.object({ teamId: z.number() })).mutation(async (opts) => {
+    const { default: handler } = await import("./deleteTeam.handler");
+    return handler(opts);
+  }),
+  deleteOrganization: authedAdminProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .mutation(async (opts) => {
+      const { default: handler } = await import("./deleteOrganization.handler");
+      return handler(opts);
+    }),
   watchlist: watchlistRouter,
 });

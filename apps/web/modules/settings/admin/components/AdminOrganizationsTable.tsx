@@ -3,6 +3,7 @@
 import { trpc } from "@calcom/trpc/react";
 import { Badge } from "@calcom/ui/components/badge";
 import { Button } from "@calcom/ui/components/button";
+import { ConfirmationDialogContent, Dialog } from "@calcom/ui/components/dialog";
 import { TextField } from "@calcom/ui/components/form";
 import { showToast } from "@calcom/ui/components/toast";
 import type { JSX } from "react";
@@ -83,6 +84,21 @@ export function AdminOrganizationsTable(): JSX.Element {
   const utils = trpc.useUtils();
   const { data: organizations, isLoading } = trpc.viewer.admin.listOrganizations.useQuery();
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const deleteMutation = trpc.viewer.admin.deleteOrganization.useMutation({
+    onSuccess: async () => {
+      await utils.viewer.admin.listOrganizations.invalidate();
+      showToast("Organization deleted", "success");
+      setDeletingId(null);
+    },
+    onError: (err) => {
+      showToast(err.message, "error");
+      setDeletingId(null);
+    },
+  });
+
+  const orgToDelete = organizations?.find((o) => o.id === deletingId);
 
   const updateMutation = trpc.viewer.admin.updateOrganization.useMutation({
     onSuccess: async () => {
@@ -111,6 +127,7 @@ export function AdminOrganizationsTable(): JSX.Element {
   }
 
   return (
+    <>
     <div className="space-y-4">
       {organizations.map((org) => {
         const isVerified = org.organizationSettings?.isOrganizationVerified ?? false;
@@ -161,6 +178,12 @@ export function AdminOrganizationsTable(): JSX.Element {
                 onClick={() => setEditingId(isEditing ? null : org.id)}>
                 {isEditing ? "Close" : "Edit settings"}
               </Button>
+              <Button
+                color="destructive"
+                size="sm"
+                onClick={() => setDeletingId(org.id)}>
+                Delete
+              </Button>
             </div>
 
             {isEditing && (
@@ -170,5 +193,21 @@ export function AdminOrganizationsTable(): JSX.Element {
         );
       })}
     </div>
+
+    <Dialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+      <ConfirmationDialogContent
+        title="Delete organization"
+        confirmBtnText="Delete"
+        cancelBtnText="Cancel"
+        variety="danger"
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deletingId !== null && deleteMutation.mutate({ organizationId: deletingId })}>
+        <p>
+          Are you sure you want to delete <strong>{orgToDelete?.name}</strong>? This will permanently
+          remove the organization, all its teams, and all members. This action cannot be undone.
+        </p>
+      </ConfirmationDialogContent>
+    </Dialog>
+    </>
   );
 }
