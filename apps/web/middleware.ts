@@ -33,6 +33,8 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Run on all paths except static assets and Next.js internals
-  matcher: ["/((?!api|_next/static|_next/image|favicon\\.ico).*)"],
+  // Run on all paths except static assets and Next.js internals.
+  // /api/auth/* (NextAuth) is included intentionally — injecting x-cal-org-slug
+  // there is harmless, and tRPC routes now rely on this header for org context.
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
 };

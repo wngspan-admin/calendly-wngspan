@@ -1,12 +1,10 @@
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-
 import { useIsEmbed } from "@calcom/embed-core/embed-iframe";
 import { useIsStandalone } from "@calcom/lib/hooks/useIsStandalone";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { SettingsIcon } from "@coss/ui/icons";
 import { Logo } from "@calcom/ui/components/logo";
-
+import { SettingsIcon } from "@coss/ui/icons";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { KBarTrigger } from "./Kbar";
 import { UserDropdown } from "./user-dropdown/UserDropdown";
 
@@ -24,7 +22,7 @@ function TopNav() {
     <>
       <nav
         style={isEmbed ? { display: "none" } : {}}
-        className="bg-cal-muted/50 border-subtle sticky top-0 z-40 flex w-full items-center justify-between border-b px-4 py-1.5 backdrop-blur-lg sm:p-4 md:hidden">
+        className="sticky top-0 z-40 flex w-full items-center justify-between border-[#e7defc] border-b bg-[#faf8ff]/90 px-4 py-2 backdrop-blur-xl sm:p-4 md:hidden dark:border-[#332653] dark:bg-[#171122]/90">
         <Link href="/event-types">
           <Logo />
         </Link>
@@ -32,12 +30,12 @@ function TopNav() {
           <span className="hover:bg-cal-muted hover:text-emphasis text-default group flex items-center rounded-full text-sm font-medium transition lg:hidden">
             <KBarTrigger />
           </span>
-          <button className="hover:bg-cal-muted hover:text-subtle text-muted rounded-full p-1 transition focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2">
+          <Link
+            href="/settings/my-account/profile"
+            className="rounded-full p-2 text-muted transition hover:bg-[var(--wngspan-primary-muted)] hover:text-emphasis focus:outline-none focus:ring-2 focus:ring-[var(--wngspan-primary)] focus:ring-offset-2">
             <span className="sr-only">{t("settings")}</span>
-            <Link href="/settings/my-account/profile">
-              <SettingsIcon className="text-default h-4 w-4" />
-            </Link>
-          </button>
+            <SettingsIcon className="h-4 w-4 text-default" />
+          </Link>
           <UserDropdown small />
         </div>
       </nav>

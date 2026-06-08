@@ -1,30 +1,27 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import type { Dispatch, ReactElement, ReactNode, SetStateAction } from "react";
-import type React from "react";
-import { cloneElement } from "react";
-import { Toaster } from "sonner";
-
-import { useFormbricks } from "@calcom/web/modules/formbricks/hooks/useFormbricks";
-import { useRedirectToLoginIfUnauthenticated } from "@calcom/web/modules/auth/hooks/useRedirectToLoginIfUnauthenticated";
-import { useRedirectToOnboardingIfNeeded } from "@calcom/web/modules/auth/hooks/useRedirectToOnboardingIfNeeded";
-
-import TimezoneChangeDialog from "@calcom/web/modules/settings/components/TimezoneChangeDialog";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import classNames from "@calcom/ui/classNames";
 import { Button } from "@calcom/ui/components/button";
 import { ErrorBoundary } from "@calcom/ui/components/errorBoundary";
 import { SkeletonText } from "@calcom/ui/components/skeleton";
-
-import { DynamicModals } from "./DynamicModals";
-import { KBarContent, KBarRoot } from "./Kbar";
-import { SideBarContainer } from "./SideBar";
-import { TopNavContainer } from "./TopNav";
+import { useRedirectToLoginIfUnauthenticated } from "@calcom/web/modules/auth/hooks/useRedirectToLoginIfUnauthenticated";
+import { useRedirectToOnboardingIfNeeded } from "@calcom/web/modules/auth/hooks/useRedirectToOnboardingIfNeeded";
+import { useFormbricks } from "@calcom/web/modules/formbricks/hooks/useFormbricks";
+import TimezoneChangeDialog from "@calcom/web/modules/settings/components/TimezoneChangeDialog";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import type React from "react";
+import type { Dispatch, ReactElement, ReactNode, SetStateAction } from "react";
+import { cloneElement } from "react";
+import { Toaster } from "sonner";
 import { BannerContainer } from "./banners/LayoutBanner";
 import { useBanners } from "./banners/useBanners";
+import { DynamicModals } from "./DynamicModals";
+import { KBarContent, KBarRoot } from "./Kbar";
 import { MobileNavigationContainer } from "./navigation/Navigation";
+import { SideBarContainer } from "./SideBar";
+import { TopNavContainer } from "./TopNav";
 import { useAppTheme } from "./useAppTheme";
 
 const Layout = (props: LayoutProps) => {
@@ -41,7 +38,7 @@ const Layout = (props: LayoutProps) => {
       <TimezoneChangeDialog />
       <DynamicModals />
 
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-[#f8f7fc] dark:bg-[#100c18]">
         {banners && <BannerContainer banners={banners} />}
 
         <div className="flex flex-1" data-testid="dashboard-shell">
@@ -132,7 +129,7 @@ export function ShellMain(props: LayoutProps) {
       {(props.heading || !!props.backPath) && (
         <div
           className={classNames(
-            "bg-default mb-0 flex items-center md:mb-6 md:mt-0",
+            "mb-0 flex items-center bg-default/95 backdrop-blur md:mb-6 md:mt-0",
             props.smallHeading ? "lg:mb-7" : "lg:mb-8",
             !props.disableSticky && "sticky top-0 z-10"
           )}>
@@ -159,7 +156,7 @@ export function ShellMain(props: LayoutProps) {
                 {props.heading && (
                   <h3
                     className={classNames(
-                      "font-cal text-emphasis max-w-28 sm:max-w-72 md:max-w-80 hidden truncate text-lg font-semibold tracking-wide sm:text-xl md:block xl:max-w-full",
+                      "font-cal max-w-28 text-emphasis sm:max-w-72 md:max-w-80 hidden truncate text-lg font-semibold tracking-tight sm:text-xl md:block xl:max-w-full",
                       props.smallHeading ? "text-base" : "text-xl"
                     )}>
                     {!isLocaleReady ? <SkeletonText invisible /> : props.heading}
@@ -202,10 +199,10 @@ function MainContainer({
   ...props
 }: LayoutProps) {
   return (
-    <main className="bg-default relative z-0 flex-1 focus:outline-none">
+    <main className="relative z-0 flex-1 bg-[#f8f7fc] focus:outline-none dark:bg-[#100c18]">
       {/* show top navigation for md and smaller (tablet and phones) */}
       {TopNavContainerProp}
-      <div className="max-w-full p-2 sm:p-4 lg:p-6">
+      <div className="mx-auto max-w-[1600px] p-2 sm:p-4 lg:p-6">
         <ErrorBoundary>
           {!props.withoutMain ? <ShellMain {...props}>{props.children}</ShellMain> : props.children}
         </ErrorBoundary>

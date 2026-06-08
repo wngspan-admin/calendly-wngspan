@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { authedAdminProcedure } from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
 import { ZAdminAssignFeatureToTeamSchema } from "./assignFeatureToTeam.schema";
@@ -65,17 +66,27 @@ export const adminRouter = router({
       const { default: handler } = await import("./unassignFeatureFromTeam.handler");
       return handler(opts);
     }),
-  listOrganizations: authedAdminProcedure.query(async (opts) => {
+  listOrganizations: authedAdminProcedure.query(async () => {
     const { default: handler } = await import("./listOrganizations.handler");
-    return handler(opts);
+    return handler();
   }),
-  listTeams: authedAdminProcedure.query(async (opts) => {
+  listTeams: authedAdminProcedure.query(async () => {
     const { default: handler } = await import("./listTeams.handler");
-    return handler(opts);
+    return handler();
   }),
   updateOrganization: authedAdminProcedure.input(ZAdminUpdateOrganizationSchema).mutation(async (opts) => {
     const { default: handler } = await import("./updateOrganization.handler");
     return handler(opts);
   }),
+  deleteTeam: authedAdminProcedure.input(z.object({ teamId: z.number() })).mutation(async (opts) => {
+    const { default: handler } = await import("./deleteTeam.handler");
+    return handler(opts);
+  }),
+  deleteOrganization: authedAdminProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .mutation(async (opts) => {
+      const { default: handler } = await import("./deleteOrganization.handler");
+      return handler(opts);
+    }),
   watchlist: watchlistRouter,
 });

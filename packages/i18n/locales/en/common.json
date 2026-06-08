@@ -2797,7 +2797,7 @@
   "organization_trial_workspace_warning": "This trial uses the Organizations workspace structure. Your current data will move with you into Organizations, but it won't transfer back if you switch to Teams later. If you prefer Teams again in the future, you can create a new team.",
   "set_up_your_organization": "Set up your organization",
   "set_up_your_platform_organization": "Set up your platform",
-  "organizations_description": "Organizations are shared environments where teams can create shared event types, apps, workflows and more.",
+  "organizations_description": "Manage your organizations and their members.",
   "plans": "Plans",
   "platform": "Platform",
   "platform_description": "Manage everything related to platform.",
@@ -2920,7 +2920,6 @@
   "description_requires_booker_email_verification": "To ensure booker's email verification before scheduling events",
   "requires_confirmation_mandatory": "Text messages can only be sent to attendees when event type requires confirmation.",
   "organizations": "Organizations",
-  "organizations_description": "Manage your organizations and their members.",
   "no_organizations": "No organizations yet",
   "no_organizations_description": "Create an organization to manage teams and members.",
   "create_organization": "Create organization",
@@ -4790,5 +4789,11 @@
   "user_updated_successfully": "User updated successfully.",
   "error_updating_user": "There was an error updating this user.",
   "please_reschedule": "Please reschedule.",
-  "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑"
+  "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑",
+  "email_team_accepted|subject": "{{memberName}} accepted your invitation to join {{teamName}}",
+  "email_team_accepted|heading": "A new member has joined {{teamName}}",
+  "email_team_accepted|content": "{{memberName}} has accepted your invitation and joined the team <strong>{{teamName}}</strong> on {{appName}}.",
+  "email_team_removed|subject": "You have been removed from {{teamName}}",
+  "email_team_removed|heading": "You've been removed from a team",
+  "email_team_removed|content": "You have been removed from the team <strong>{{teamName}}</strong> on {{appName}}."
 }

@@ -1,3 +1,4 @@
+import { APP_NAME } from "@calcom/lib/constants";
 import classNames from "@calcom/ui/classNames";
 
 export function Logo({
@@ -22,29 +23,29 @@ export function Logo({
         {icon ? (
           <img
             className="mx-auto w-9"
-            alt="WNGSPAN"
-            title="WNGSPAN"
+            alt={APP_NAME}
+            title={APP_NAME}
             src={isCustomSrc ? `${logoSrc}?type=icon` : "/wngspan-icon-source.jpg"}
           />
         ) : isCustomSrc ? (
           <img
             className={classNames(small ? "h-4 w-auto" : "h-5 w-auto")}
-            alt="WNGSPAN"
-            title="WNGSPAN"
+            alt={APP_NAME}
+            title={APP_NAME}
             src={logoSrc}
           />
         ) : (
           <>
             <img
               className={classNames(small ? "h-4 w-auto" : "h-5 w-auto", "dark:hidden")}
-              alt="WNGSPAN"
-              title="WNGSPAN"
+              alt={APP_NAME}
+              title={APP_NAME}
               src="/wngspan-logo.png"
             />
             <img
               className={classNames(small ? "h-4 w-auto" : "h-5 w-auto", "hidden dark:block")}
-              alt="WNGSPAN"
-              title="WNGSPAN"
+              alt={APP_NAME}
+              title={APP_NAME}
               src="/wngspan-logo-white.png"
             />
           </>

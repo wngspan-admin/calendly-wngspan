@@ -1,8 +1,9 @@
+import { sendTeamRemovedEmail } from "@calcom/emails/organization-email-service";
+import { getTranslation } from "@calcom/i18n/server";
+import { checkTeamPermission } from "@calcom/lib/teams/checkTeamPermission";
 import prisma from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { TRPCError } from "@trpc/server";
-
-import { checkTeamPermission } from "@calcom/lib/teams/checkTeamPermission";
 
 import type { TrpcSessionUser } from "../../../types";
 import type { TRemoveMemberInputSchema } from "./removeMember.schema";
@@ -19,6 +20,7 @@ export const removeMemberHandler = async ({ ctx, input }: RemoveMemberHandlerOpt
 
   const targetMembership = await prisma.membership.findUnique({
     where: { userId_teamId: { userId: input.memberId, teamId: input.teamId } },
+    select: { role: true, user: { select: { email: true, locale: true } } },
   });
   if (!targetMembership) throw new TRPCError({ code: "NOT_FOUND" });
 
@@ -26,7 +28,24 @@ export const removeMemberHandler = async ({ ctx, input }: RemoveMemberHandlerOpt
     throw new TRPCError({ code: "FORBIDDEN", message: "Cannot remove the team owner" });
   }
 
-  return prisma.membership.delete({
-    where: { userId_teamId: { userId: input.memberId, teamId: input.teamId } },
-  });
+  const [deleted, team] = await Promise.all([
+    prisma.membership.delete({
+      where: { userId_teamId: { userId: input.memberId, teamId: input.teamId } },
+    }),
+    prisma.team.findUnique({
+      where: { id: input.teamId },
+      select: { name: true },
+    }),
+  ]);
+
+  if (team) {
+    const t = await getTranslation(targetMembership.user.locale ?? "en", "common");
+    await sendTeamRemovedEmail({
+      language: t,
+      to: targetMembership.user.email,
+      teamName: team.name,
+    });
+  }
+
+  return deleted;
 };

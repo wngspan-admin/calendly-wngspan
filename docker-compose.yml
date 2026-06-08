@@ -11,7 +11,7 @@ networks:
 
 services:
   database:
-    container_name: database
+    container_name: wngspan-db
     image: postgres
     restart: always
     volumes:
@@ -24,7 +24,7 @@ services:
       - stack
 
   redis:
-    container_name: redis
+    container_name: wngspan-redis
     image: redis:latest
     restart: always
     volumes:
@@ -34,8 +34,9 @@ services:
     ports:
       - "${REDIS_PORT:-6379}:6379"
 
-  calcom:
-    image: calcom.docker.scarf.sh/calcom/cal.diy
+  wngspan-web:
+    container_name: wngspan-web
+    image: wngspan-web
     build:
       context: .
       dockerfile: Dockerfile
@@ -65,8 +66,9 @@ services:
     depends_on:
       - database
 
-  calcom-api:
-    container_name: calcom-api
+  wngspan-api:
+    container_name: wngspan-api
+    image: wngspan-api
     build:
       context: .
       dockerfile: apps/api/v2/Dockerfile
@@ -118,8 +120,9 @@ services:
       - redis
 
   # Optional use of Prisma Studio. In production, comment out or remove the section below to prevent unwanted access to your database.
-  studio:
-    image: calcom.docker.scarf.sh/calcom/cal.diy
+  wngspan-studio:
+    container_name: wngspan-studio
+    image: wngspan-web
     restart: always
     networks:
       - stack

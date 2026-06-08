@@ -1,6 +1,5 @@
-import { vi, beforeEach } from "vitest";
-
 import type * as constants from "@calcom/lib/constants";
+import { beforeEach, vi } from "vitest";
 
 const initialConstants = {
   IS_PRODUCTION: false,
@@ -9,14 +8,14 @@ const initialConstants = {
   PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM: true,
   CLOUDFLARE_SITE_ID: "test-site-id",
   CLOUDFLARE_USE_TURNSTILE_IN_BOOKER: "1",
-  DEFAULT_LIGHT_BRAND_COLOR: "#292929",
-  DEFAULT_DARK_BRAND_COLOR: "#fafafa",
+  DEFAULT_LIGHT_BRAND_COLOR: "#2B007A",
+  DEFAULT_DARK_BRAND_COLOR: "#D8C7FF",
   CALCOM_VERSION: "0.0.0",
   IS_SELF_HOSTED: false,
   SEO_IMG_DEFAULT: "https://cal.com/og-image.png",
   SEO_IMG_OGIMG: "https://cal.com/og-image-wide.png",
   CURRENT_TIMEZONE: "Europe/London",
-  APP_NAME: "Cal.diy",
+  APP_NAME: "WNGSPAN",
   BOOKER_NUMBER_OF_DAYS_TO_LOAD: 14,
   PUBLIC_QUICK_AVAILABILITY_ROLLOUT: 100,
   SINGLE_ORG_SLUG: "",

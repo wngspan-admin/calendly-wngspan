@@ -85,10 +85,11 @@ ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
   BUILT_NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL
 
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+  PORT=3000
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=30s --retries=5 \
-  CMD wget --spider http://localhost:3000 || exit 1
+  CMD wget --spider "http://localhost:${PORT}" || exit 1
 
 CMD ["/calcom/scripts/start.sh"]

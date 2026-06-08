@@ -1,7 +1,11 @@
 import type BaseEmail from "@calcom/emails/templates/_base-email";
 
+import type { TeamAccepted } from "./templates/team-accepted-email";
+import TeamAcceptedEmail from "./templates/team-accepted-email";
 import type { TeamInvite } from "./templates/team-invite-email";
 import TeamInviteEmail from "./templates/team-invite-email";
+import type { TeamRemoved } from "./templates/team-removed-email";
+import TeamRemovedEmail from "./templates/team-removed-email";
 import type { OrganizationCreation } from "./templates/organization-creation-email";
 import OrganizationCreationEmail from "./templates/organization-creation-email";
 import type { OrganizationAdminNoSlotsEmailInput } from "./src/templates/OrganizationAdminNoSlots";
@@ -24,6 +28,14 @@ const sendEmail = (prepare: () => BaseEmail) => {
 
 export const sendTeamInviteEmail = async (teamInviteEvent: TeamInvite) => {
   await sendEmail(() => new TeamInviteEmail(teamInviteEvent));
+};
+
+export const sendTeamAcceptedEmail = async (event: TeamAccepted) => {
+  await sendEmail(() => new TeamAcceptedEmail(event));
+};
+
+export const sendTeamRemovedEmail = async (event: TeamRemoved) => {
+  await sendEmail(() => new TeamRemovedEmail(event));
 };
 
 export const sendOrganizationCreationEmail = async (organizationCreationEvent: OrganizationCreation) => {

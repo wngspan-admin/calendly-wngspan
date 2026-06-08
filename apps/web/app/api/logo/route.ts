@@ -6,6 +6,7 @@ import {
   FAVICON_32,
   IS_SELF_HOSTED,
   LOGO,
+  LOGO_DARK,
   LOGO_ICON,
   MSTILE_ICON,
   WEBAPP_URL,
@@ -42,6 +43,7 @@ const SYSTEM_SUBDOMAINS = ["console", "app", "www"];
 
 type LogoType =
   | "logo"
+  | "logo-dark"
   | "icon"
   | "favicon-16"
   | "favicon-32"
@@ -60,6 +62,10 @@ type LogoTypeDefinition = {
 const logoDefinitions: Record<LogoType, LogoTypeDefinition> = {
   logo: {
     fallback: `${WEBAPP_URL}${LOGO}`,
+    source: "appLogo",
+  },
+  "logo-dark": {
+    fallback: `${WEBAPP_URL}${LOGO_DARK}`,
     source: "appLogo",
   },
   icon: {
@@ -183,7 +189,7 @@ async function getHandler(request: NextRequest) {
   const [subdomain] = domains;
   const teamLogos = await getTeamLogos(subdomain, isValidOrgDomain);
 
-  // Resolve all icon types to team logos, falling back to Cal.diy defaults.
+  // Keep organization branding when available and use WNGSPAN assets as the platform fallback.
   const type: LogoType = parsedQuery?.type && isValidLogoType(parsedQuery.type) ? parsedQuery.type : "logo";
   const logoDefinition = logoDefinitions[type];
   const filteredLogo = teamLogos[logoDefinition.source] ?? logoDefinition.fallback;
@@ -213,8 +219,7 @@ async function getHandler(request: NextRequest) {
     let buffer: Buffer = Buffer.from(arrayBuffer);
     let contentType = response.headers.get("content-type") || "image/png";
 
-    // Resize the team logos if needed
-    if (teamLogos[logoDefinition.source] && logoDefinition.w) {
+    if (logoDefinition.w) {
       const { resizeImage } = await import("@calcom/lib/server/imageUtils");
       const { buffer: outBuffer, contentType: outContentType } = await resizeImage({
         buffer,

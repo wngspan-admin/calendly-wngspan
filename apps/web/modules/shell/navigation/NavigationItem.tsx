@@ -128,10 +128,10 @@ export const NavigationItem: React.FC<{
                           trackNavigationClick(childItem.name, item.name);
                         }}
                         className={classNames(
-                          "group relative block rounded-md px-3 py-1 text-sm font-medium",
+                          "group relative block rounded-lg px-3 py-1.5 text-sm font-medium",
                           childIsCurrent
-                            ? "bg-emphasis text-white"
-                            : "hover:bg-emphasis text-mute hover:text-emphasis"
+                            ? "bg-[var(--wngspan-primary)] text-[var(--wngspan-primary-text)]"
+                            : "text-muted hover:bg-[var(--wngspan-primary-muted)] hover:text-emphasis"
                         )}>
                         {t(childItem.name)}
                       </Link>
@@ -157,12 +157,12 @@ export const NavigationItem: React.FC<{
               }
             }}
             className={classNames(
-              "todesktop:py-[7px] text-default group relative flex w-full items-center rounded-md px-2 py-1.5 text-sm font-medium transition",
+              "todesktop:py-[7px] group relative flex w-full items-center rounded-lg px-2 py-2 font-medium text-default text-sm transition",
               "aria-[aria-current='page']:bg-transparent!",
               "[&[aria-current='page']]:text-emphasis mt-0.5 text-sm",
               "md:justify-center lg:justify-start",
               isLocaleReady
-                ? "hover:bg-subtle todesktop:[&[aria-current='page']]:bg-emphasis todesktop:hover:bg-transparent hover:text-emphasis"
+                ? "hover:bg-[var(--wngspan-primary-muted)] hover:text-emphasis todesktop:[&[aria-current='page']]:bg-[var(--wngspan-primary-muted)] todesktop:hover:bg-transparent"
                 : ""
             )}>
             {item.icon && (
@@ -210,17 +210,17 @@ export const NavigationItem: React.FC<{
             aria-label={t(item.name)}
             target={item.target}
             className={classNames(
-              "todesktop:py-[7px] text-default group flex items-center rounded-md px-2 py-1.5 text-sm font-medium transition",
+              "todesktop:py-[7px] group flex items-center rounded-lg px-2 py-2 font-medium text-default text-sm transition",
               item.child
                 ? `aria-[aria-current='page']:bg-transparent!`
-                : `[&[aria-current='page']]:bg-emphasis`,
+                : `[&[aria-current='page']]:bg-[var(--wngspan-primary-muted)]`,
               isChild
-                ? `[&[aria-current='page']]:text-emphasis [&[aria-current='page']]:bg-emphasis hidden h-8 pl-16 lg:flex lg:pl-11 ${
+                ? `[&[aria-current='page']]:bg-[var(--wngspan-primary-muted)] [&[aria-current='page']]:text-[var(--wngspan-primary-emphasis)] hidden h-8 pl-16 lg:flex lg:pl-11 ${
                     props.index === 0 ? "mt-0" : "mt-1  hover:mt-1 [&[aria-current='page']]:mt-1"
                   }`
-                : "[&[aria-current='page']]:text-emphasis mt-0.5 text-sm md:justify-center lg:justify-start",
+                : "[&[aria-current='page']]:text-[var(--wngspan-primary-emphasis)] mt-0.5 text-sm md:justify-center lg:justify-start",
               isLocaleReady
-                ? "hover:bg-subtle todesktop:[&[aria-current='page']]:bg-emphasis todesktop:hover:bg-transparent hover:text-emphasis"
+                ? "hover:bg-[var(--wngspan-primary-muted)] hover:text-emphasis todesktop:[&[aria-current='page']]:bg-[var(--wngspan-primary-muted)] todesktop:hover:bg-transparent"
                 : ""
             )}
             aria-current={current ? "page" : undefined}>
@@ -283,13 +283,13 @@ export const MobileNavigationItem: React.FC<{
       key={item.name}
       href={item.href}
       target={item.target}
-      className="[&[aria-current='page']]:text-emphasis hover:text-default text-muted bg-transparent! relative my-2 min-w-0 flex-1 overflow-hidden rounded-md p-1 text-center text-xs font-medium focus:z-10 sm:text-sm"
+      className="relative my-2 min-w-0 flex-1 overflow-hidden rounded-lg bg-transparent! p-1 text-center font-medium text-muted text-xs hover:text-default focus:z-10 [&[aria-current='page']]:text-[var(--wngspan-primary-emphasis)] sm:text-sm"
       aria-current={current ? "page" : undefined}>
       {item.badge && <div className="absolute right-1 top-1">{item.badge}</div>}
       {item.icon && (
         <Icon
           name={item.icon}
-          className="[&[aria-current='page']]:text-emphasis  mx-auto mb-1 block h-5 w-5 shrink-0 text-center text-inherit"
+          className="mx-auto mb-1 block h-5 w-5 shrink-0 text-center text-inherit [&[aria-current='page']]:text-[var(--wngspan-primary-emphasis)]"
           aria-hidden="true"
           aria-current={current ? "page" : undefined}
         />
