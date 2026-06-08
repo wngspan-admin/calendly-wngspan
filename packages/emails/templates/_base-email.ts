@@ -4,7 +4,7 @@ import { z } from "zod";
 import dayjs from "@calcom/dayjs";
 import { FeaturesRepository } from "@calcom/features/flags/features.repository";
 import isSmsCalEmail from "@calcom/lib/isSmsCalEmail";
-import { serverConfig } from "@calcom/lib/serverConfig";
+import { resendClient, serverConfig } from "@calcom/lib/serverConfig";
 import { getServerErrorFromUnknown } from "@calcom/lib/server/getServerErrorFromUnknown";
 import { setTestEmail } from "@calcom/lib/testEmails";
 import { prisma } from "@calcom/prisma";
@@ -62,6 +62,44 @@ export default class BaseEmail {
     const sanitizedTo = sanitizeDisplayName(to);
 
     const parseSubject = z.string().safeParse(payload?.subject);
+    const subject = parseSubject.success ? decodeHTML(parseSubject.data) : "";
+
+    // Resend SDK path — used when RESEND_API_KEY is set
+    if (resendClient) {
+      const toAddresses = sanitizedTo
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const { data, error } = await resendClient.emails
+        .send({
+          from: sanitizedFrom,
+          to: toAddresses,
+          subject,
+          html: payload.html as string,
+          ...(payload.text ? { text: payload.text as string } : {}),
+        })
+        .catch((e: Error) => {
+          this.printNodeMailerError(e);
+          return { data: null, error: e };
+        });
+
+      if (error) {
+        console.error(
+          "sendEmail via Resend",
+          `from: ${sanitizedFrom}`,
+          `to: ${sanitizedTo}`,
+          `subject: ${subject}`,
+          error
+        );
+      } else {
+        console.log("sendEmail via Resend", `id: ${data?.id}`, `to: ${sanitizedTo}`);
+      }
+
+      return new Promise((resolve) => resolve("send mail async"));
+    }
+
+    // Nodemailer fallback — used when RESEND_API_KEY is not set
     const payloadWithUnEscapedSubject = {
       headers: this.getMailerOptions().headers,
       ...payload,
@@ -69,7 +107,7 @@ export default class BaseEmail {
         from: sanitizedFrom,
         to: sanitizedTo,
       },
-      ...(parseSubject.success && { subject: decodeHTML(parseSubject.data) }),
+      ...(parseSubject.success && { subject }),
     };
     const { createTransport } = await import("nodemailer");
     await new Promise((resolve, reject) =>
