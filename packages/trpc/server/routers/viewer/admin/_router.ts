@@ -65,13 +65,13 @@ export const adminRouter = router({
       const { default: handler } = await import("./unassignFeatureFromTeam.handler");
       return handler(opts);
     }),
-  listOrganizations: authedAdminProcedure.query(async (opts) => {
+  listOrganizations: authedAdminProcedure.query(async () => {
     const { default: handler } = await import("./listOrganizations.handler");
-    return handler(opts);
+    return handler();
   }),
-  listTeams: authedAdminProcedure.query(async (opts) => {
+  listTeams: authedAdminProcedure.query(async () => {
     const { default: handler } = await import("./listTeams.handler");
-    return handler(opts);
+    return handler();
   }),
   updateOrganization: authedAdminProcedure.input(ZAdminUpdateOrganizationSchema).mutation(async (opts) => {
     const { default: handler } = await import("./updateOrganization.handler");
