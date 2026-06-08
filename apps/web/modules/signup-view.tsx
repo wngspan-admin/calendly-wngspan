@@ -1,5 +1,6 @@
 "use client";
 
+import process from "node:process";
 import getStripe from "@calcom/app-store/stripepayment/lib/client";
 import { getPremiumPlanPriceValue } from "@calcom/app-store/stripepayment/lib/utils";
 import {
@@ -35,6 +36,7 @@ import { Alert } from "@calcom/ui/components/alert";
 import { Button } from "@calcom/ui/components/button";
 import { CheckboxField, Form, PasswordField, SelectField, TextField } from "@calcom/ui/components/form";
 import { Icon } from "@calcom/ui/components/icon";
+import { Logo } from "@calcom/ui/components/logo";
 import { showToast } from "@calcom/ui/components/toast";
 import { InfoIcon, ShieldCheckIcon, StarIcon } from "@coss/ui/icons";
 import { Analytics as DubAnalytics } from "@dub/analytics/react";
@@ -375,14 +377,17 @@ export default function Signup({
       ) : null}
       <div
         className={classNames(
-          "light flex min-h-screen w-full flex-col items-center justify-center bg-cal-muted [--cal-brand:#111827] 2xl:bg-default dark:[--cal-brand:#FFFFFF]",
-          "[--cal-brand-subtle:#9CA3AF]",
-          "[--cal-brand-text:#FFFFFF] dark:[--cal-brand-text:#000000]",
-          "[--cal-brand-emphasis:#101010] dark:[--cal-brand-emphasis:#e1e1e1]"
+          "light flex min-h-screen w-full flex-col items-center justify-center bg-[#f8f7fc] 2xl:bg-default dark:bg-[#100c18]",
+          "[--cal-brand:var(--wngspan-primary)]",
+          "[--cal-brand-subtle:var(--wngspan-primary-muted)]",
+          "[--cal-brand-text:var(--wngspan-primary-text)]",
+          "[--cal-brand-emphasis:var(--wngspan-primary-emphasis)]"
         )}>
-        <div className="grid w-full max-w-[1440px] grid-cols-1 grid-rows-1 overflow-hidden bg-cal-muted lg:grid-cols-2 2xl:rounded-[20px] 2xl:border 2xl:border-subtle 2xl:py-6">
-          {/* Left side */}
+        <div className="grid w-full max-w-[1440px] grid-cols-1 grid-rows-1 overflow-hidden bg-[#faf8ff] lg:grid-cols-2 2xl:rounded-[24px] 2xl:border 2xl:border-[#e7defc] 2xl:py-6 dark:bg-[#171122] dark:2xl:border-[#332653]">
           <div className="mt-0 mr-auto ml-auto flex w-full max-w-xl flex-col px-4 pt-6 sm:px-16 md:px-20 lg:mt-24 2xl:px-28">
+            <div className="mb-10">
+              <Logo />
+            </div>
             {accountUnderReview ? (
               <div
                 className="flex flex-col items-center gap-4 py-10 text-center"
@@ -511,15 +516,8 @@ export default function Signup({
                           setPremium={(value) => setPremiumUsername(value)}
                           addOnLeading={
                             orgSlug
-                              ? truncateDomain(
-                                  `${WEBAPP_URL.replace(
-                                    URL_PROTOCOL_REGEX,
-                                    ""
-                                  )}/`
-                                )
-                              : truncateDomain(
-                                  `${WEBSITE_URL.replace(URL_PROTOCOL_REGEX, "")}/`
-                                )
+                              ? truncateDomain(`${WEBAPP_URL.replace(URL_PROTOCOL_REGEX, "")}/`)
+                              : truncateDomain(`${WEBSITE_URL.replace(URL_PROTOCOL_REGEX, "")}/`)
                           }
                         />
                       ) : null}
@@ -770,7 +768,7 @@ export default function Signup({
               </>
             )}
           </div>
-          <div className="mx-auto mt-24 w-full max-w-2xl flex-col justify-between rounded-l-2xl border-subtle pl-4 lg:mt-0 lg:flex lg:max-w-full lg:border lg:bg-subtle lg:py-12 lg:pl-12 dark:bg-none">
+          <div className="mx-auto mt-24 w-full max-w-2xl flex-col justify-between rounded-l-2xl border-[#e7defc] pl-4 lg:mt-0 lg:flex lg:max-w-full lg:border lg:bg-white/70 lg:py-12 lg:pl-12 dark:border-[#332653] dark:bg-white/5">
             {IS_CALCOM && (
               <>
                 <div className="-mt-4 mr-12 mb-6 grid w-full grid-cols-3 gap-5 pr-4 sm:gap-3 lg:grid-cols-4">
@@ -779,7 +777,7 @@ export default function Signup({
                     <img
                       src="/product-cards/product-of-the-day.svg"
                       className="h-[34px] w-full dark:invert"
-                      alt="Cal.diy was Product of the Day at ProductHunt"
+                      alt={`${APP_NAME} was Product of the Day at ProductHunt`}
                     />
                   </div>
                   <div>
@@ -787,7 +785,7 @@ export default function Signup({
                     <img
                       src="/product-cards/product-of-the-week.svg"
                       className="h-[34px] w-full dark:invert"
-                      alt="Cal.diy was Product of the Week at ProductHunt"
+                      alt={`${APP_NAME} was Product of the Week at ProductHunt`}
                     />
                   </div>
                   <div>
@@ -795,7 +793,7 @@ export default function Signup({
                     <img
                       src="/product-cards/product-of-the-month.svg"
                       className="h-[34px] w-full dark:invert"
-                      alt="Cal.diy was Product of the Month at ProductHunt"
+                      alt={`${APP_NAME} was Product of the Month at ProductHunt`}
                     />
                   </div>
                 </div>
@@ -827,13 +825,17 @@ export default function Signup({
                 </div>
               </>
             )}
-            <div className="hidden rounded-tl-2xl rounded-br-none rounded-bl-2xl border border-default border-r-0 border-dashed bg-black/3 lg:block lg:py-[6px] lg:pl-[6px] dark:bg-white/5">
-              <img className="block dark:hidden" src="/mock-event-type-list.svg" alt="Cal.diy Booking Page" />
+            <div className="hidden rounded-tl-2xl rounded-br-none rounded-bl-2xl border border-[#e7defc] border-r-0 border-dashed bg-white/70 lg:block lg:py-[6px] lg:pl-[6px] dark:border-[#332653] dark:bg-white/5">
+              <img
+                className="block dark:hidden"
+                src="/mock-event-type-list.svg"
+                alt={`${APP_NAME} booking page`}
+              />
               {/* eslint-disable @next/next/no-img-element */}
               <img
                 className="hidden dark:block"
                 src="/mock-event-type-list-dark.svg"
-                alt="Cal.diy Booking Page"
+                alt={`${APP_NAME} booking page`}
               />
             </div>
             <div className="mt-8 mr-12 hidden h-full w-full grid-cols-3 gap-4 overflow-hidden lg:grid">

@@ -1,9 +1,9 @@
 {
-  "name": "Cal.diy",
-  "description": "Open Source Scheduling",
-  "repository": "https://github.com/calcom/cal.diy",
-  "logo": "https://cal.com/android-chrome-512x512.png",
-  "keywords": ["react", "typescript", "node", "nextjs", "prisma", "postgres", "trpc"],
+  "name": "WNGSPAN",
+  "description": "Self-hosted scheduling infrastructure for WNGSPAN",
+  "repository": "https://github.com/wngspan-admin/calendly-wngspan",
+  "logo": "https://raw.githubusercontent.com/wngspan-admin/calendly-wngspan/dev/apps/web/public/wngspan-icon.svg",
+  "keywords": ["wngspan", "scheduling", "typescript", "nextjs", "prisma", "postgres", "trpc"],
   "addons": [
     {
       "plan": "heroku-postgresql:mini"
@@ -11,11 +11,11 @@
   ],
   "env": {
     "PGSSLMODE": {
-      "description": "If you use Heroku to deploy Postgres (or use self-signed certs for Postgres) then put 'no-verify' here.",
+      "description": "Set to 'no-verify' if your Postgres deployment uses self-signed certificates.",
       "value": "no-verify"
     },
     "NEXT_PUBLIC_WEBAPP_URL": {
-      "description": "Replace HEROKU_APP_NAME with the name given to your app",
+      "description": "Public base URL for the WNGSPAN web app.",
       "value": "https://HEROKU_APP_NAME.herokuapp.com",
       "required": "true"
     },
@@ -25,7 +25,7 @@
       "required": "true"
     },
     "NEXTAUTH_URL": {
-      "description": "Replace HEROKU_APP_NAME with the name given to your app",
+      "description": "Public base URL used by NextAuth. This should match the deployed app URL.",
       "value": "https://HEROKU_APP_NAME.herokuapp.com"
     },
     "NEXTAUTH_SECRET": {
@@ -34,7 +34,7 @@
       "required": "true"
     },
     "CRON_API_KEY": {
-      "description": "ApiKey for cronjobs",
+      "description": "API key used by cron routes.",
       "value": ""
     },
     "CRON_ENABLE_APP_SYNC": {
@@ -61,7 +61,7 @@
       "required": false
     },
     "EMAIL_FROM": {
-      "description": "Configures the global From: header whilst sending emails",
+      "description": "Default From address used for outgoing WNGSPAN emails.",
       "value": ""
     },
     "EMAIL_SERVER_HOST": {

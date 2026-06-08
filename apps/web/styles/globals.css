@@ -4,6 +4,42 @@
 @import "../../../packages/coss-ui/src/styles/globals.css";
 @import "./raqb.css";
 
+:root {
+  --wngspan-primary: #2b007a;
+  --wngspan-primary-emphasis: #1a004a;
+  --wngspan-primary-muted: #ede7ff;
+  --wngspan-primary-text: #ffffff;
+  --brand-color: var(--wngspan-primary);
+  --cal-brand: var(--wngspan-primary);
+  --cal-brand-emphasis: var(--wngspan-primary-emphasis);
+  --cal-brand-text: var(--wngspan-primary-text);
+  --primary: var(--wngspan-primary);
+  --primary-foreground: var(--wngspan-primary-text);
+  --ring: #7c3aed;
+  --sidebar-primary: var(--wngspan-primary);
+  --sidebar-primary-foreground: var(--wngspan-primary-text);
+  --sidebar-accent: #f1edff;
+  --sidebar-accent-foreground: var(--wngspan-primary-emphasis);
+}
+
+.dark {
+  --wngspan-primary: #d8c7ff;
+  --wngspan-primary-emphasis: #f4f0ff;
+  --wngspan-primary-muted: #2a1852;
+  --wngspan-primary-text: #160033;
+  --brand-color: var(--wngspan-primary);
+  --cal-brand: var(--wngspan-primary);
+  --cal-brand-emphasis: var(--wngspan-primary-emphasis);
+  --cal-brand-text: var(--wngspan-primary-text);
+  --primary: var(--wngspan-primary);
+  --primary-foreground: var(--wngspan-primary-text);
+  --ring: #a78bfa;
+  --sidebar-primary: var(--wngspan-primary);
+  --sidebar-primary-foreground: var(--wngspan-primary-text);
+  --sidebar-accent: #241744;
+  --sidebar-accent-foreground: #f4f0ff;
+}
+
 ::-moz-selection {
   color: var(--cal-brand-text);
   background: var(--cal-brand);

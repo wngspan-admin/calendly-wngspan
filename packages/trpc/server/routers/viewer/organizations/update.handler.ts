@@ -1,7 +1,6 @@
 import prisma from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { TRPCError } from "@trpc/server";
-
 import type { TrpcSessionUser } from "../../../types";
 import type { TUpdateOrgInputSchema } from "./update.schema";
 
@@ -33,11 +32,13 @@ export const updateOrganizationHandler = async ({ ctx, input }: UpdateOrgHandler
       name,
       slug,
       bio,
-      organizationSettings: {
-        update: {
-          orgAutoAcceptEmail: orgAutoAcceptEmail ?? null,
+      ...(orgAutoAcceptEmail !== undefined && {
+        organizationSettings: {
+          update: {
+            orgAutoAcceptEmail,
+          },
         },
-      },
+      }),
     },
     include: { organizationSettings: true },
   });

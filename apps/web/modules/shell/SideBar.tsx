@@ -60,10 +60,13 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
       <aside
         style={sidebarStylingAttributes}
         className={classNames(
-          "fixed left-0 hidden h-full w-14 flex-col overflow-y-auto overflow-x-hidden border-muted border-r bg-cal-muted md:sticky md:flex lg:w-56 lg:px-3",
+          "fixed left-0 hidden h-full w-14 flex-col overflow-y-auto overflow-x-hidden border-r border-[#e7defc] bg-[#faf8ff] md:sticky md:flex lg:w-56 lg:px-3 dark:border-[#332653] dark:bg-[#171122]",
           "max-h-screen"
         )}>
         <div className="flex h-full flex-col justify-between py-3 lg:pt-4">
+          <Link href="/event-types" className="mb-5 hidden px-1.5 lg:flex">
+            <Logo />
+          </Link>
           <header className="todesktop:-mt-3 todesktop:flex-col-reverse items-center justify-between todesktop:[-webkit-app-region:drag] md:hidden lg:flex">
             {user?.org ? (
               !ENABLE_PROFILE_SWITCHER ? (
@@ -113,7 +116,6 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
               <KBarTrigger />
             </div>
           </header>
-          {/* logo icon for tablet */}
           <Link href="/event-types" className="text-center md:inline lg:hidden">
             <Logo small icon />
           </Link>
@@ -130,9 +132,9 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
                 target={item.target}
                 className={classNames(
                   "text-left",
-                  "justify-right group flex items-center rounded-md px-2 py-1.5 font-medium text-default text-sm transition [&[aria-current='page']]:bg-emphasis",
-                  "mt-0.5 w-full text-sm [&[aria-current='page']]:text-emphasis",
-                  isLocaleReady ? "hover:bg-subtle hover:text-emphasis" : "",
+                  "justify-right group flex items-center rounded-lg px-2 py-2 font-medium text-default text-sm transition [&[aria-current='page']]:bg-[var(--wngspan-primary-muted)]",
+                  "mt-0.5 w-full text-sm [&[aria-current='page']]:text-[var(--wngspan-primary-emphasis)]",
+                  isLocaleReady ? "hover:bg-[var(--wngspan-primary-muted)] hover:text-emphasis" : "",
                   index === 0 && "mt-3"
                 )}
                 onClick={item.onClick}>

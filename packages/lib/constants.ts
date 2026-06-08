@@ -1,3 +1,5 @@
+import { WNGSPAN_BRAND } from "./brand";
+
 /**
  * Ensures URL has a protocol prefix. If the URL doesn't start with http:// or https://,
  * prepends https:// to make it valid for URL parsing.
@@ -34,12 +36,12 @@ export const WEBAPP_URL_FOR_OAUTH = IS_PRODUCTION || IS_DEV ? WEBAPP_URL : "http
 
 /** @deprecated use `WEBAPP_URL` */
 export const BASE_URL = WEBAPP_URL;
-export const WEBSITE_URL = ensureProtocol(process.env.NEXT_PUBLIC_WEBSITE_URL) || "https://wngspan.com";
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "WNGSPAN";
-export const SUPPORT_MAIL_ADDRESS = process.env.NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS || "help@wngspan.com";
-export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "WNGSPAN, Inc.";
-export const SENDER_ID = process.env.NEXT_PUBLIC_SENDER_ID || "WNGSPAN";
-export const SENDER_NAME = process.env.NEXT_PUBLIC_SENDGRID_SENDER_NAME || "WNGSPAN";
+export const WEBSITE_URL = ensureProtocol(WNGSPAN_BRAND.websiteUrl);
+export const APP_NAME = WNGSPAN_BRAND.appName;
+export const SUPPORT_MAIL_ADDRESS = WNGSPAN_BRAND.supportEmail;
+export const COMPANY_NAME = WNGSPAN_BRAND.companyName;
+export const SENDER_ID = WNGSPAN_BRAND.senderId;
+export const SENDER_NAME = WNGSPAN_BRAND.senderName;
 export const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
 
 // This is the URL from which all Cal Links and their assets are served.
@@ -98,22 +100,22 @@ export const PUBLIC_QUICK_AVAILABILITY_ROLLOUT =
 
 /** @deprecated use `WEBAPP_URL` */
 export const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || `https://${process.env.VERCEL_URL}`;
-export const LOGO = "/wngspan-logo-white.png";
-export const LOGO_DARK = "/wngspan-logo-dark.png";
-export const LOGO_ICON = "/wngspan-icon-source.jpg";
+export const LOGO = WNGSPAN_BRAND.logos.wordmark;
+export const LOGO_DARK = WNGSPAN_BRAND.logos.wordmarkDark;
+export const LOGO_ICON = WNGSPAN_BRAND.logos.icon;
 export const AVATAR_FALLBACK = "/avatar.svg";
-export const FAVICON_16 = "/favicon-16x16.png";
-export const FAVICON_32 = "/favicon-32x32.png";
-export const APPLE_TOUCH_ICON = "/apple-touch-icon.png";
-export const MSTILE_ICON = "/mstile-150x150.png";
-export const ANDROID_CHROME_ICON_192 = "/android-chrome-192x192.png";
-export const ANDROID_CHROME_ICON_256 = "/android-chrome-256x256.png";
-export const ROADMAP = "https://wngspan.com/roadmap";
-export const DESKTOP_APP_LINK = "https://wngspan.com/download";
-export const JOIN_COMMUNITY = "https://wngspan.com/community";
-export const POWERED_BY_URL = "https://wngspan.com";
-export const DOCS_URL = process.env.DOCS_URL || "https://wngspan.com/docs";
-export const DEVELOPER_DOCS = "https://wngspan.com/docs/api";
+export const FAVICON_16 = WNGSPAN_BRAND.logos.icon;
+export const FAVICON_32 = WNGSPAN_BRAND.logos.icon;
+export const APPLE_TOUCH_ICON = WNGSPAN_BRAND.logos.icon;
+export const MSTILE_ICON = WNGSPAN_BRAND.logos.icon;
+export const ANDROID_CHROME_ICON_192 = WNGSPAN_BRAND.logos.icon;
+export const ANDROID_CHROME_ICON_256 = WNGSPAN_BRAND.logos.icon;
+export const ROADMAP = "https://cal.com/roadmap";
+export const DESKTOP_APP_LINK = "https://cal.com/download";
+export const JOIN_COMMUNITY = "https://github.com/calcom/cal.diy/discussions";
+export const POWERED_BY_URL = "https://go.cal.com/booking";
+export const DOCS_URL = "https://cal.com/docs";
+export const DEVELOPER_DOCS = "https://developer.cal.com";
 export const SEO_IMG_DEFAULT = `${CAL_URL}/og-image.png`;
 // The Dynamic OG Image is passed through Next's Image API to further optimize it.
 // This results in a 80% smaller image 🤯. It is however important that for the query
@@ -159,8 +161,8 @@ export const CREDENTIAL_SYNC_ENDPOINT = process.env.CALCOM_CREDENTIAL_SYNC_ENDPO
 // Service Account Encryption Key for encrypting/decrypting service account keys
 export const SERVICE_ACCOUNT_ENCRYPTION_KEY = process.env.CALCOM_SERVICE_ACCOUNT_ENCRYPTION_KEY;
 
-export const DEFAULT_LIGHT_BRAND_COLOR = "#292929";
-export const DEFAULT_DARK_BRAND_COLOR = "#fafafa";
+export const DEFAULT_LIGHT_BRAND_COLOR: string = WNGSPAN_BRAND.colors.primary;
+export const DEFAULT_DARK_BRAND_COLOR: string = WNGSPAN_BRAND.colors.darkPrimary;
 
 export const TOP_BANNER_HEIGHT = 40;
 

@@ -1,10 +1,11 @@
 import { getLocale } from "@calcom/features/auth/lib/getLocale";
 import { loadTranslations } from "@calcom/i18n/server";
+import { WNGSPAN_BRAND } from "@calcom/lib/brand";
+import { APP_NAME } from "@calcom/lib/constants";
 import { IconSprites } from "@calcom/ui/components/icon";
 import { buildLegacyRequest } from "@lib/buildLegacyCtx";
 import { dir } from "i18next";
 import { Inter } from "next/font/google";
-import localFont from "next/font/local";
 import { cookies, headers } from "next/headers";
 import Script from "next/script";
 import type React from "react";
@@ -15,13 +16,6 @@ import { Providers } from "./providers";
 import { SpeculationRules } from "./SpeculationRules";
 
 const interFont = Inter({ subsets: ["latin"], variable: "--font-sans", preload: true, display: "swap" });
-const calFont = localFont({
-  src: "../fonts/CalSans-SemiBold.woff2",
-  variable: "--font-cal",
-  preload: true,
-  display: "block",
-  weight: "600",
-});
 
 export const viewport = {
   width: "device-width",
@@ -32,16 +26,21 @@ export const viewport = {
   themeColor: [
     {
       media: "(prefers-color-scheme: light)",
-      color: "#f9fafb",
+      color: WNGSPAN_BRAND.colors.primaryMuted,
     },
     {
       media: "(prefers-color-scheme: dark)",
-      color: "#1C1C1C",
+      color: WNGSPAN_BRAND.colors.primaryEmphasis,
     },
   ],
 };
 
 export const metadata = {
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: WNGSPAN_BRAND.description,
   icons: {
     icon: "/api/logo?type=favicon-32",
     apple: "/api/logo?type=apple-touch-icon",
@@ -49,7 +48,7 @@ export const metadata = {
       {
         rel: "icon-mask",
         url: "/safari-pinned-tab.svg",
-        color: "#000000",
+        color: WNGSPAN_BRAND.colors.primary,
       },
       {
         url: "/api/logo?type=favicon-16",
@@ -65,7 +64,7 @@ export const metadata = {
   },
   manifest: "/site.webmanifest",
   other: {
-    "application-TileColor": "#ff0000",
+    "application-TileColor": WNGSPAN_BRAND.colors.primary,
   },
   twitter: {
     site: "@wngspan",
@@ -116,8 +115,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head nonce={nonce}>
         <style>{`
           :root {
-            --font-sans: ${interFont.style.fontFamily.replace(/\'/g, "")}, system-ui;
-            --font-cal: ${calFont.style.fontFamily.replace(/\'/g, "")};
+            --font-sans: ${interFont.style.fontFamily.replace(/'/g, "")}, system-ui;
+            --font-cal: ${interFont.style.fontFamily.replace(/'/g, "")}, system-ui;
+            --font-heading: ${interFont.style.fontFamily.replace(/'/g, "")}, system-ui;
           }
         `}</style>
         {process.env.NODE_ENV === "development" && (
@@ -151,13 +151,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <IconSprites />
         <SpeculationRules
           // URLs In Navigation
-          prerenderPathsOnHover={[
-            "/event-types",
-            "/availability",
-            "/bookings/upcoming",
-            "/teams",
-            "/apps",
-          ]}
+          prerenderPathsOnHover={["/event-types", "/availability", "/bookings/upcoming", "/teams", "/apps"]}
         />
 
         <Providers isEmbed={isEmbed} nonce={nonce} country={country}>
