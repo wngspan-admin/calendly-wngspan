@@ -6,6 +6,18 @@ import {
   deleteDomain as deleteVercelDomain,
 } from "./deploymentServices/vercel";
 
+const subdomainSuffix = (): string => {
+  const webAppUrl = process.env.NEXT_PUBLIC_WEBAPP_URL ?? "";
+  try {
+    const hostname = new URL(webAppUrl).hostname;
+    const parts = hostname.split(".");
+    // Strip the leftmost subdomain (e.g. "cal.wngspan.com" -> "wngspan.com")
+    return parts.length > 2 ? parts.slice(1).join(".") : hostname;
+  } catch {
+    return webAppUrl;
+  }
+};
+
 const log = logger.getSubLogger({ prefix: ["domainManager/organization"] });
 export const deleteDomain = async (slug: string) => {
   const domain = `${slug}.${subdomainSuffix()}`;
