@@ -90,6 +90,6 @@ ENV NODE_ENV=production \
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=30s --retries=5 \
-  CMD wget --spider "http://localhost:${PORT}" || exit 1
+  CMD wget --spider "http://localhost:${PORT}/api/health" || exit 1
 
 CMD ["/calcom/scripts/start.sh"]
