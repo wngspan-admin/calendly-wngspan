@@ -12,6 +12,17 @@ fi
 if [ -n "${DATABASE_HOST:-}" ]; then
   scripts/wait-for-it.sh "${DATABASE_HOST}" -- echo "database is up"
 fi
-npx prisma migrate deploy --schema /calcom/packages/prisma/schema.prisma
-npx ts-node --transpile-only /calcom/scripts/seed-app-store.ts
+
+if [ "${RUN_DB_MIGRATIONS_AT_STARTUP:-1}" = "1" ]; then
+  npx prisma migrate deploy --schema /calcom/packages/prisma/schema.prisma
+else
+  echo "Skipping prisma migrate deploy because RUN_DB_MIGRATIONS_AT_STARTUP is disabled"
+fi
+
+if [ "${RUN_APP_STORE_SEED_AT_STARTUP:-0}" = "1" ]; then
+  npx ts-node --transpile-only /calcom/scripts/seed-app-store.ts
+else
+  echo "Skipping app store seed because RUN_APP_STORE_SEED_AT_STARTUP is disabled"
+fi
+
 exec yarn start
