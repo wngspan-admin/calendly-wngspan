@@ -8,7 +8,7 @@ import type { RouterOutputs } from "@calcom/trpc/react";
 import { Badge } from "@calcom/ui/components/badge";
 import { Button } from "@calcom/ui/components/button";
 import { ConfirmationDialogContent, Dialog, DialogTrigger } from "@calcom/ui/components/dialog";
-import { Select, TextField } from "@calcom/ui/components/form";
+import { Label, Select, TextField } from "@calcom/ui/components/form";
 import { showToast } from "@calcom/ui/components/toast";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -21,10 +21,27 @@ const ROLE_BADGE: Record<MembershipRole, "orange" | "blue" | "default"> = {
   MEMBER: "default",
 };
 
+type RoleOption = {
+  value: MembershipRole;
+  label: MembershipRole;
+};
+
+type InviteRole = "ADMIN" | "MEMBER";
+
+type InviteRoleOption = {
+  value: InviteRole;
+  label: InviteRole;
+};
+
 const ROLE_OPTIONS = [
-  { value: "MEMBER", label: "Member" },
-  { value: "ADMIN", label: "Admin" },
-];
+  { value: MembershipRole.MEMBER, label: MembershipRole.MEMBER },
+  { value: MembershipRole.ADMIN, label: MembershipRole.ADMIN },
+] satisfies readonly RoleOption[];
+
+const INVITE_ROLE_OPTIONS = [
+  { value: MembershipRole.MEMBER, label: MembershipRole.MEMBER },
+  { value: MembershipRole.ADMIN, label: MembershipRole.ADMIN },
+] satisfies readonly InviteRoleOption[];
 
 function MemberRow({
   member,
@@ -114,7 +131,7 @@ export default function TeamMembersView({
   const { t } = useLocale();
   const { data: session } = useSession();
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"MEMBER" | "ADMIN">("MEMBER");
+  const [inviteRole, setInviteRole] = useState<InviteRole>(MembershipRole.MEMBER);
 
   const { data: members, refetch } = trpc.viewer.teams.getMembers.useQuery({ teamId });
 
@@ -145,13 +162,14 @@ export default function TeamMembersView({
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="colleague@company.com"
             />
-            <Select
-              label={t("role")}
-              value={{ value: inviteRole, label: inviteRole }}
-              options={ROLE_OPTIONS}
-              onChange={(opt) => opt && setInviteRole(opt.value as "MEMBER" | "ADMIN")}
-              className="w-32"
-            />
+            <div className="w-32">
+              <Label>{t("role")}</Label>
+              <Select
+                value={{ value: inviteRole, label: inviteRole }}
+                options={INVITE_ROLE_OPTIONS}
+                onChange={(opt) => opt && setInviteRole(opt.value)}
+              />
+            </div>
             <Button
               onClick={() => inviteMember.mutate({ teamId, email: inviteEmail, role: inviteRole })}
               loading={inviteMember.isPending}

@@ -1,7 +1,6 @@
 //import "server-only";
 import type { LocationObject } from "@calcom/app-store/locations";
 import { getLocationGroupedOptions } from "@calcom/app-store/server";
-import { getEventTypeAppData } from "@calcom/app-store/utils";
 import { eventTypeMetaDataSchemaWithTypedApps } from "@calcom/app-store/zod-utils";
 import { getBookingFieldsWithSystemFields } from "@calcom/features/bookings/lib/getBookingFields";
 import { EventTypeRepository } from "@calcom/features/eventtypes/repositories/eventTypeRepository";
@@ -75,7 +74,16 @@ export const getEventTypeById = async ({
   const { locations, metadata, ...restEventType } = rawEventType;
   const newMetadata = eventTypeMetaDataSchemaWithTypedApps.parse(metadata || {}) || {};
   const apps = newMetadata?.apps || {};
-  const eventTypeWithParsedMetadata = { ...rawEventType, metadata: newMetadata };
+  const legacyMetadata =
+    metadata && typeof metadata === "object" ? (metadata as { giphyThankYouPage?: unknown }) : null;
+  const giphyThankYouPage =
+    typeof legacyMetadata?.giphyThankYouPage === "string" ? legacyMetadata.giphyThankYouPage : "";
+  const giphyAppData = giphyThankYouPage
+    ? {
+        enabled: true,
+        thankYouPage: giphyThankYouPage,
+      }
+    : undefined;
   const userRepo = new UserRepository(prisma);
   const eventTeamMembershipsWithUserProfile = [];
   for (const eventTeamMembership of rawEventType.team?.members || []) {
@@ -108,12 +116,15 @@ export const getEventTypeById = async ({
     );
   }
 
-  newMetadata.apps = {
-    ...apps,
-    giphy: getEventTypeAppData(eventTypeWithParsedMetadata, "giphy", true) ?? undefined,
-  };
-
-  const parsedMetaData = newMetadata;
+  const parsedMetaData = giphyAppData
+    ? ({
+        ...newMetadata,
+        apps: {
+          ...apps,
+          giphy: giphyAppData,
+        },
+      } as typeof newMetadata)
+    : newMetadata;
 
   const parsedCustomInputs = (rawEventType.customInputs || []).map((input) => customInputSchema.parse(input));
 

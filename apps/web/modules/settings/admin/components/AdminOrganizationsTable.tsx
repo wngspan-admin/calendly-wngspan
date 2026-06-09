@@ -6,7 +6,7 @@ import { Button } from "@calcom/ui/components/button";
 import { ConfirmationDialogContent, Dialog } from "@calcom/ui/components/dialog";
 import { TextField } from "@calcom/ui/components/form";
 import { showToast } from "@calcom/ui/components/toast";
-import type { JSX } from "react";
+import type { ReactElement } from "react";
 import { useState } from "react";
 
 function formatDate(value: Date | string): string {
@@ -16,7 +16,7 @@ function formatDate(value: Date | string): string {
 type OrgRow = {
   id: number;
   name: string;
-  slug: string;
+  slug: string | null;
   createdAt: Date | string;
   organizationSettings: {
     orgAutoAcceptEmail: string | null;
@@ -31,7 +31,7 @@ function EditOrgForm({
 }: {
   org: OrgRow;
   onDone: () => void;
-}): JSX.Element {
+}): ReactElement {
   const utils = trpc.useUtils();
   const [name, setName] = useState(org.name);
   const [domain, setDomain] = useState(org.organizationSettings?.orgAutoAcceptEmail ?? "");
@@ -80,7 +80,7 @@ function EditOrgForm({
   );
 }
 
-export function AdminOrganizationsTable(): JSX.Element {
+export function AdminOrganizationsTable(): ReactElement {
   const utils = trpc.useUtils();
   const { data: organizations, isLoading } = trpc.viewer.admin.listOrganizations.useQuery();
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -142,7 +142,7 @@ export function AdminOrganizationsTable(): JSX.Element {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate font-semibold text-emphasis">{org.name}</h2>
-                  <Badge variant={isVerified ? "green" : "yellow"}>
+                  <Badge variant={isVerified ? "green" : "warning"}>
                     {isVerified ? "Verified" : "Unverified"}
                   </Badge>
                 </div>

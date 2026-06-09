@@ -12,7 +12,6 @@ import { z } from "zod";
 import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
 import type { getEventLocationValue } from "@calcom/app-store/locations";
 import { getSuccessPageLocationMessage, guessEventLocationType } from "@calcom/app-store/locations";
-import { getEventTypeAppData } from "@calcom/app-store/utils";
 import { eventTypeMetaDataSchemaWithTypedApps } from "@calcom/app-store/zod-utils";
 import type { ConfigType } from "@calcom/dayjs";
 import dayjs from "@calcom/dayjs";
@@ -271,14 +270,13 @@ export default function Success(props: PageProps) {
     t,
   };
 
-  const giphyAppData = getEventTypeAppData(
-    {
-      ...eventType,
-      metadata: eventTypeMetaDataSchemaWithTypedApps.parse(eventType.metadata),
-    },
-    "giphy"
-  );
-  const giphyImage = giphyAppData?.thankYouPage;
+  const parsedEventTypeMetadata = eventTypeMetaDataSchemaWithTypedApps.parse(eventType.metadata);
+  const legacyMetadata =
+    eventType.metadata && typeof eventType.metadata === "object"
+      ? (eventType.metadata as { giphyThankYouPage?: unknown })
+      : null;
+  const giphyImage =
+    typeof legacyMetadata?.giphyThankYouPage === "string" ? legacyMetadata.giphyThankYouPage : undefined;
   const isRoundRobin = eventType.schedulingType === SchedulingType.ROUND_ROBIN;
 
   const eventName = getEventName(eventNameObject, true);
@@ -485,9 +483,7 @@ export default function Success(props: PageProps) {
           </Link>
         </div>
       )}
-      <BookingPageTagManager
-        eventType={{ ...eventType, metadata: eventTypeMetaDataSchemaWithTypedApps.parse(eventType.metadata) }}
-      />
+      <BookingPageTagManager eventType={{ ...eventType, metadata: parsedEventTypeMetadata }} />
       <main className={classNames(shouldAlignCentrally ? "mx-auto" : "", isEmbed ? "" : "max-w-3xl")}>
         <div className={classNames("overflow-y-auto", isEmbed ? "" : "z-50 ")}>
           <div

@@ -13,7 +13,6 @@ import { getIs24hClockFromLocalStorage, isBrowserLocale24h } from "@calcom/lib/t
 import { CURRENT_TIMEZONE } from "@calcom/lib/timezoneConstants";
 import { localStorage } from "@calcom/lib/webstorage";
 import classNames from "classnames";
-import dynamic from "next/dynamic";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 
@@ -26,39 +25,6 @@ type PaymentPageProps = {
   profile: { theme?: string | null; hideBranding?: boolean };
   user?: { name?: string | null; username?: string | null } | null;
 };
-
-const PaypalPaymentComponent = dynamic(
-  () =>
-    import("@calcom/web/components/apps/paypal/PaypalPaymentComponent").then((m) => m.PaypalPaymentComponent),
-  {
-    ssr: false,
-  }
-);
-
-const AlbyPaymentComponent = dynamic(
-  () => import("@calcom/web/components/apps/alby/AlbyPaymentComponent").then((m) => m.AlbyPaymentComponent),
-  {
-    ssr: false,
-  }
-);
-
-const HitpayPaymentComponent = dynamic(
-  () =>
-    import("@calcom/web/components/apps/hitpay/HitpayPaymentComponent").then((m) => m.HitpayPaymentComponent),
-  {
-    ssr: false,
-  }
-);
-
-const BtcpayPaymentComponent = dynamic(
-  () =>
-    import("@calcom/web/components/apps/btcpayserver/BtcpayPaymentComponent").then(
-      (m) => m.BtcpayPaymentComponent
-    ),
-  {
-    ssr: false,
-  }
-);
 
 const PaymentPage: FC<PaymentPageProps> = (props) => {
   const { t, i18n } = useLocale();
@@ -158,18 +124,6 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
                   )}
                   {props.payment.appId === "stripe" && !props.payment.success && (
                     <div>{/* StripePaymentComponent removed */}</div>
-                  )}
-                  {props.payment.appId === "paypal" && !props.payment.success && (
-                    <PaypalPaymentComponent payment={props.payment} />
-                  )}
-                  {props.payment.appId === "alby" && !props.payment.success && (
-                    <AlbyPaymentComponent payment={props.payment} paymentPageProps={props} />
-                  )}
-                  {props.payment.appId === "hitpay" && !props.payment.success && (
-                    <HitpayPaymentComponent payment={props.payment} />
-                  )}
-                  {props.payment.appId === "btcpayserver" && !props.payment.success && (
-                    <BtcpayPaymentComponent payment={props.payment} paymentPageProps={props} />
                   )}
                   {props.payment.refunded && (
                     <div className="mt-4 text-center text-default dark:text-gray-300">{t("refunded")}</div>

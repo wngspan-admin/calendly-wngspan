@@ -6,7 +6,6 @@ import { trpc } from "@calcom/trpc/react";
 import { Badge } from "@calcom/ui/components/badge";
 import { Button } from "@calcom/ui/components/button";
 import { showToast } from "@calcom/ui/components/toast";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function TeamsListingView() {
@@ -54,9 +53,6 @@ export default function TeamsListingView() {
       ) : (
         <ul className="divide-y divide-subtle rounded-lg border border-subtle bg-default" role="list">
           {teams.map((team) => {
-            const myMembership = team.members.find(
-              (m) => "user" in m && (m as { user: { id: number } }).user.id !== undefined
-            );
             const memberCount = team.members.length;
             return (
               <li key={team.id} className="flex items-center justify-between px-5 py-4">
@@ -67,7 +63,7 @@ export default function TeamsListingView() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{team.slug}</Badge>
+                  <Badge variant="gray">{team.slug}</Badge>
                   <Button
                     color="secondary"
                     size="sm"

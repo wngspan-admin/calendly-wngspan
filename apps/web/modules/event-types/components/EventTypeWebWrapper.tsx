@@ -119,6 +119,13 @@ const EventTypeWeb = ({
   const [isOpenAssignmentWarnDialog, setIsOpenAssignmentWarnDialog] = useState<boolean>(false);
   const [pendingRoute, setPendingRoute] = useState("");
   const { eventType, locationOptions, team, teamMembers, destinationCalendar } = rest;
+  const assignmentTeamMembers = teamMembers.map((member) => ({
+    value: String(member.id),
+    label: member.name ?? member.username ?? member.email,
+    avatar: member.avatar,
+    email: member.email,
+    defaultScheduleId: member.defaultScheduleId,
+  }));
   const [slugExistsChildrenDialogOpen, setSlugExistsChildrenDialogOpen] = useState<ChildrenEventType[]>([]);
   const { data: eventTypeApps, isPending: isPendingApps } = trpc.viewer.apps.integrations.useQuery({
     extendsFeature: "EventType",
@@ -202,7 +209,7 @@ const EventTypeWeb = ({
     team: (
       <EventTeamAssignmentTab
         orgId={orgBranding?.id ?? null}
-        teamMembers={teamMembers}
+        teamMembers={assignmentTeamMembers}
         team={team}
         eventType={eventType}
       />

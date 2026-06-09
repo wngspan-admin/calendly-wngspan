@@ -57,7 +57,7 @@ export default function OrganizationsListingView() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{org.slug}</Badge>
+                  <Badge variant="gray">{org.slug}</Badge>
                   <Button
                     color="secondary"
                     size="sm"

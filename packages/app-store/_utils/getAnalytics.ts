@@ -5,6 +5,9 @@ import type { CredentialPayload } from "@calcom/types/Credential";
 import { AnalyticsServiceMap } from "../analytics.services.generated";
 
 const log = logger.getSubLogger({ prefix: ["AnalyticsManager"] });
+type AnalyticsServiceModule = {
+  default?: (credential: CredentialPayload) => AnalyticsService;
+};
 
 export const getAnalyticsService = async ({
   credential,
@@ -16,7 +19,11 @@ export const getAnalyticsService = async ({
 
   const analyticsName = analyticsType.split("_")[0];
 
-  const analyticsAppImportFn = AnalyticsServiceMap[analyticsName as keyof typeof AnalyticsServiceMap];
+  const analyticsServiceMap = AnalyticsServiceMap as Record<
+    string,
+    Promise<AnalyticsServiceModule> | AnalyticsServiceModule | undefined
+  >;
+  const analyticsAppImportFn = analyticsServiceMap[analyticsName];
 
   if (!analyticsAppImportFn) {
     log.warn(`analytics app not implemented`);
