@@ -202,7 +202,7 @@ export const config = {
     "/:path*/embed",
     "/availability",
     "/api/auth/signup",
-    "/((?!_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon\\.ico).*)",
   ],
 };
 
