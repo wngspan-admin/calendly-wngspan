@@ -22,15 +22,34 @@ const {
 } = i18nConfig;
 
 type NextConfigPlugin = (config: NextConfig) => NextConfig;
+type MutableEnv = Record<string, string | undefined>;
 
 // Type guard to filter out null/undefined values with proper type narrowing
 function isNotNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
 
+function isBuildCommand(): boolean {
+  return process.argv.includes("build");
+}
+
+function setBuildTimeEnvFallback(
+  env: MutableEnv,
+  key: keyof MutableEnv,
+  value: string,
+  reason: string
+): void {
+  if (env[key] || !isBuildCommand()) {
+    return;
+  }
+
+  console.warn(`Using build-time fallback for ${key}. ${reason}`);
+  env[key] = value;
+}
+
 function adjustEnvVariables(): void {
   // Type-safe way to modify process.env (which is typed as readonly in environment.d.ts)
-  const envMutable = process.env as Record<string, string | undefined>;
+  const envMutable = process.env as MutableEnv;
   if (process.env.NEXT_PUBLIC_SINGLE_ORG_SLUG) {
     if (process.env.RESERVED_SUBDOMAINS) {
       console.warn(
@@ -48,6 +67,27 @@ function adjustEnvVariables(): void {
 
 adjustEnvVariables();
 
+const buildEnv = process.env as MutableEnv;
+
+setBuildTimeEnvFallback(
+  buildEnv,
+  "NEXTAUTH_SECRET",
+  "build-time-nextauth-secret",
+  "Provide NEXTAUTH_SECRET at runtime for authentication to work."
+);
+setBuildTimeEnvFallback(
+  buildEnv,
+  "CALENDSO_ENCRYPTION_KEY",
+  "0123456789abcdef0123456789abcdef",
+  "Provide CALENDSO_ENCRYPTION_KEY at runtime for credential encryption to work."
+);
+setBuildTimeEnvFallback(
+  buildEnv,
+  "NEXT_PUBLIC_WEBAPP_URL",
+  "http://localhost:3000",
+  "Provide NEXT_PUBLIC_WEBAPP_URL at runtime to generate absolute URLs correctly."
+);
+
 if (!process.env.NEXTAUTH_SECRET) throw new Error("Please set NEXTAUTH_SECRET");
 if (!process.env.CALENDSO_ENCRYPTION_KEY) throw new Error("Please set CALENDSO_ENCRYPTION_KEY");
 
@@ -55,7 +95,7 @@ const isOrganizationsEnabled =
   process.env.ORGANIZATIONS_ENABLED === "1" || process.env.ORGANIZATIONS_ENABLED === "true";
 
 // Type-safe way to assign to process.env (which is typed as readonly in environment.d.ts)
-const env = process.env as Record<string, string | undefined>;
+const env = process.env as MutableEnv;
 
 env.NEXT_PUBLIC_CALCOM_VERSION = version;
 
