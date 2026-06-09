@@ -13,8 +13,34 @@ export type UpdateAppCredentialsOptions = {
   input: TUpdateAppCredentialsInputSchema;
 };
 
-const validators = {
-  paypal: () => import("@calcom/paypal/lib/updateAppCredentials.validator"),
+type CustomValidator = (options: { input: TUpdateAppCredentialsInputSchema }) => Promise<unknown> | unknown;
+
+const validatePaypalCredentials: CustomValidator = ({ input }) => {
+  const clientId = "client_id" in input.key ? input.key.client_id : undefined;
+  const secretKey = "secret_key" in input.key ? input.key.secret_key : undefined;
+
+  if (typeof clientId !== "string" || clientId.trim().length === 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "PayPal client ID is required",
+    });
+  }
+
+  if (typeof secretKey !== "string" || secretKey.trim().length === 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "PayPal secret key is required",
+    });
+  }
+
+  return {
+    client_id: clientId.trim(),
+    secret_key: secretKey.trim(),
+  };
+};
+
+const validators: Record<string, CustomValidator> = {
+  paypal: validatePaypalCredentials,
 };
 
 export const handleCustomValidations = async ({
@@ -26,8 +52,7 @@ export const handleCustomValidations = async ({
   // If no validator is found, return the key as is
   if (!validatorGetter) return key;
   try {
-    const validator = (await validatorGetter()).default;
-    return await validator({ input });
+    return await validatorGetter({ input });
   } catch (error) {
     throw new TRPCError({
       code: "BAD_REQUEST",

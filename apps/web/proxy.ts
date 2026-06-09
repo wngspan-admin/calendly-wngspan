@@ -1,8 +1,9 @@
 import process from "node:process";
 import { getCspHeader, getCspNonce } from "@lib/csp";
 import { get } from "@vercel/edge-config";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+import { nextJsOrgRewriteConfig } from "./getNextjsOrgRewriteConfig";
 
 const safeGet = async <T = any>(key: string): Promise<T | undefined> => {
   try {
@@ -158,12 +159,51 @@ function responseWithHeaders({ url, res, req }: { url: URL; res: NextResponse; r
 }
 
 function enrichRequestWithHeaders({ req }: { req: NextRequest }) {
-  const reqWithCSP = contentSecurityPolicy.addRequestHeaders({ req });
-  return reqWithCSP;
+  const requestHeaders = new Headers(req.headers);
+  const isOrganizationsEnabled =
+    process.env.ORGANIZATIONS_ENABLED === "1" || process.env.ORGANIZATIONS_ENABLED === "true";
+
+  if (isOrganizationsEnabled && nextJsOrgRewriteConfig.orgHostPath) {
+    const orgHostRegex = new RegExp(nextJsOrgRewriteConfig.orgHostPath);
+    const host = req.headers.get("host") ?? "";
+    const match = host.match(orgHostRegex);
+    const orgSlug = match?.groups?.orgSlug ?? null;
+
+    if (orgSlug) {
+      requestHeaders.set("x-cal-org-slug", orgSlug);
+    }
+  }
+
+  const enrichedRequest = new NextRequest(req.url, {
+    body: req.body,
+    cache: req.cache,
+    credentials: req.credentials,
+    duplex: "half",
+    headers: requestHeaders,
+    integrity: req.integrity,
+    keepalive: req.keepalive,
+    method: req.method,
+    mode: req.mode,
+    redirect: req.redirect,
+    referrer: req.referrer,
+    referrerPolicy: req.referrerPolicy,
+    signal: req.signal,
+  });
+
+  return contentSecurityPolicy.addRequestHeaders({ req: enrichedRequest });
 }
 
 export const config = {
-  matcher: ["/auth/login", "/login", "/apps/installed", "/auth/logout", "/:path*/embed", "/availability", "/api/auth/signup"],
+  matcher: [
+    "/auth/login",
+    "/login",
+    "/apps/installed",
+    "/auth/logout",
+    "/:path*/embed",
+    "/availability",
+    "/api/auth/signup",
+    "/((?!_next/static|_next/image|favicon\\.ico).*)",
+  ],
 };
 
 export default proxy;

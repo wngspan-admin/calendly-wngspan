@@ -12,7 +12,7 @@ import { DialogClose, DialogContent, DialogFooter } from "@calcom/ui/components/
 import { showToast } from "@calcom/ui/components/toast";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { useRouter } from "next/navigation";
-import type { JSX } from "react";
+import type { ReactElement } from "react";
 import { useEffect } from "react";
 import { z } from "zod";
 import { useCreateEventType } from "../hooks/useCreateEventType";
@@ -70,7 +70,7 @@ const locationFormSchema: z.ZodType<LocationQueryValue> = z.array(
   })
 );
 
-const querySchema: z.ZodType<CreateEventTypeQuery> = z.object({
+const querySchema = z.object({
   eventPage: z.string().optional(),
   teamId: z.union([z.string().transform((val) => +val), z.number()]).optional(),
   title: z.string().optional(),
@@ -112,7 +112,7 @@ export function CreateEventTypeDialog({
   profileOptions: _profileOptions,
 }: {
   profileOptions: ProfileOption[];
-}): JSX.Element {
+}): ReactElement {
   const { t } = useLocale();
   const router = useRouter();
   const {
@@ -187,7 +187,7 @@ export function CreateEventTypeDialog({
     },
   ];
 
-  let schedulingTypeSelector: JSX.Element | null = null;
+  let schedulingTypeSelector: ReactElement | null = null;
   if (teamId) {
     schedulingTypeSelector = (
       <div className="mt-3 mb-6 grid gap-3 sm:grid-cols-3">
@@ -227,7 +227,7 @@ export function CreateEventTypeDialog({
           handleSubmit={(values: TCreateEventTypeInput): void => {
             createMutation.mutate(values);
           }}
-          SubmitButton={(isPending: boolean): JSX.Element => (
+          SubmitButton={(isPending: boolean): ReactElement => (
             <DialogFooter showDivider>
               <DialogClose />
               <Button type="submit" loading={isPending}>
