@@ -303,7 +303,7 @@ const useTabs = ({
   const { data: user } = useMeQuery({ includePasswordAdded: true });
   const { data: orgs } = trpc.viewer.organizations.list.useQuery();
   const orgBranding = orgs?.[0]
-    ? { id: orgs[0].id, slug: orgs[0].slug ?? undefined, name: orgs[0].name ?? undefined, logoUrl: orgs[0].logo }
+    ? { id: orgs[0].id, slug: orgs[0].slug ?? undefined, name: orgs[0].name ?? undefined, logoUrl: orgs[0].logoUrl }
     : null;
   const isAdmin = session.data?.user.role === UserPermissionRole.ADMIN;
 
