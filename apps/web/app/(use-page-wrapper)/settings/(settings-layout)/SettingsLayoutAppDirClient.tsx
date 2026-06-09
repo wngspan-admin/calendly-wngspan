@@ -2,12 +2,13 @@
 
 import { HAS_ORG_OPT_IN_FEATURES } from "@calcom/features/feature-opt-in/config";
 import type { TeamFeatures } from "@calcom/features/flags/config";
-import { IS_CALCOM, WEBAPP_URL } from "@calcom/lib/constants";
+import { WEBAPP_URL } from "@calcom/lib/constants";
 import { getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
 import { getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
 import { useIsStandalone } from "@calcom/lib/hooks/useIsStandalone";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { IdentityProvider, UserPermissionRole } from "@calcom/prisma/enums";
+import { trpc } from "@calcom/trpc/react";
 import useMeQuery from "@calcom/trpc/react/hooks/useMeQuery";
 import classNames from "@calcom/ui/classNames";
 import { Badge } from "@calcom/ui/components/badge";
@@ -254,7 +255,7 @@ const getTabs = (
   ];
 
   for (const tab of tabs) {
-    if (tab.name === "admin" && IS_CALCOM) {
+    if (tab.name === "admin") {
       tab.children?.push({
         name: "create_org",
         href: "/settings/organizations/new",
@@ -300,7 +301,10 @@ const useTabs = ({
 }) => {
   const session = useSession();
   const { data: user } = useMeQuery({ includePasswordAdded: true });
-  const orgBranding = null as { id?: number; slug?: string; name?: string; logoUrl?: string | null } | null;
+  const { data: orgs } = trpc.viewer.organizations.list.useQuery();
+  const orgBranding = orgs?.[0]
+    ? { id: orgs[0].id, slug: orgs[0].slug ?? undefined, name: orgs[0].name ?? undefined, logoUrl: orgs[0].logo }
+    : null;
   const isAdmin = session.data?.user.role === UserPermissionRole.ADMIN;
 
   const processTabsMemod = useMemo(() => {
