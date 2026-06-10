@@ -17,7 +17,7 @@ export default async function AdminOrganizationsPage() {
             organization features.
           </p>
         </div>
-        <Button href="/settings/organizations/new">{t("create_organization")}</Button>
+        <Button href="/settings/admin/organizations/new">{t("create_organization")}</Button>
       </div>
       <AdminOrganizationsTable />
     </div>

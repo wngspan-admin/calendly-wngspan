@@ -1,6 +1,6 @@
 import authedProcedure from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
-import { ZCreateOrgInputSchema } from "./create.schema";
+import { ZAcceptOrganizationInviteSchema } from "./acceptInvite.schema";
 import { ZGetOrgInputSchema } from "./get.schema";
 import {
   ZBulkChangeOrgMemberRoleInputSchema,
@@ -13,9 +13,9 @@ import {
 import { ZUpdateOrgInputSchema } from "./update.schema";
 
 export const organizationsRouter = router({
-  create: authedProcedure.input(ZCreateOrgInputSchema).mutation(async ({ ctx, input }) => {
-    const { createOrganizationHandler } = await import("./create.handler");
-    return createOrganizationHandler({ ctx, input });
+  acceptInvite: authedProcedure.input(ZAcceptOrganizationInviteSchema).mutation(async ({ ctx, input }) => {
+    const { acceptOrganizationInviteHandler } = await import("./acceptInvite.handler");
+    return acceptOrganizationInviteHandler({ ctx, input });
   }),
 
   list: authedProcedure.query(async ({ ctx }) => {

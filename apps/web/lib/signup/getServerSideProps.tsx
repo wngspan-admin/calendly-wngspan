@@ -62,30 +62,13 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     onboardingV3Enabled,
   };
 
-  if ((process.env.NEXT_PUBLIC_DISABLE_SIGNUP === "true" && !token) || signupDisabled) {
+  if (!token || process.env.NEXT_PUBLIC_DISABLE_SIGNUP === "true" || signupDisabled) {
     return {
       redirect: {
         permanent: false,
         destination: `/auth/error?error=Signup is disabled in this instance`,
       },
     } as const;
-  }
-
-  // no token given, treat as a normal signup without verification token
-  if (!token) {
-    // username + email prepopulated from query params
-    const queryData = querySchema.safeParse(ctx.query);
-    return {
-      props: JSON.parse(
-        JSON.stringify({
-          ...props,
-          prepopulateFormValues: {
-            username: queryData.success ? queryData.data.username : null,
-            email: queryData.success ? queryData.data.email : null,
-          },
-        })
-      ),
-    };
   }
 
   const verificationToken = await prisma.verificationToken.findUnique({

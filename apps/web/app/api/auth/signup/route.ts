@@ -22,8 +22,12 @@ async function ensureSignupIsEnabled(body: Record<string, string>) {
     })
     .parse(body);
 
-  // Still allow signups if there is a team invite
-  if (token) return;
+  if (!token) {
+    throw new HttpError({
+      statusCode: 403,
+      message: "Signup requires an organization invitation",
+    });
+  }
 
   const featuresRepository = new FeaturesRepository(prisma);
   const signupDisabled = await featuresRepository.checkIfFeatureIsEnabledGlobally("disable-signup");

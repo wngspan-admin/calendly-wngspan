@@ -5,11 +5,9 @@ import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { trpc } from "@calcom/trpc/react";
 import { Badge } from "@calcom/ui/components/badge";
 import { Button } from "@calcom/ui/components/button";
-import { useRouter } from "next/navigation";
 
 export default function OrganizationsListingView() {
   const { t } = useLocale();
-  const router = useRouter();
   const { data: orgs, isLoading } = trpc.viewer.organizations.list.useQuery();
 
   if (isLoading) {
@@ -25,23 +23,11 @@ export default function OrganizationsListingView() {
   }
 
   return (
-    <SettingsHeader
-      title={t("organizations")}
-      description={t("organizations_description")}
-      CTA={
-        <Button
-          onClick={() => router.push("/settings/organizations/new")}
-          data-testid="new-org-btn">
-          {t("create_organization")}
-        </Button>
-      }>
+    <SettingsHeader title={t("organizations")} description={t("organizations_description")}>
       {!orgs?.length ? (
         <div className="rounded-lg border border-subtle bg-default px-6 py-12 text-center">
           <p className="text-sm font-medium text-emphasis">{t("no_organizations")}</p>
           <p className="mt-1 text-sm text-default">{t("no_organizations_description")}</p>
-          <Button className="mt-4" onClick={() => router.push("/settings/organizations/new")}>
-            {t("create_organization")}
-          </Button>
         </div>
       ) : (
         <ul className="divide-y divide-subtle rounded-lg border border-subtle bg-default" role="list">
