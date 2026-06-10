@@ -1,3 +1,4 @@
+import process from "node:process";
 import { expect, test } from "@playwright/test";
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || "admin@example.com";
@@ -32,26 +33,17 @@ test.describe("Organization settings (authenticated)", () => {
   });
 
   test("Can create an organization and land on org settings page", async ({ page }) => {
-    const slug = `e2e-org-${Date.now()}`;
+    const organizationName = `E2E Test Org ${Date.now()}`;
     await page.goto("/settings/organizations/new");
 
-    await page.getByLabel(/organization name|org name/i).fill("E2E Test Org");
-
-    const nextBtn = page.getByRole("button", { name: /next|continue/i }).first();
-    await nextBtn.click();
-
-    const skipBtn = page.getByRole("button", { name: /skip/i });
-    if (await skipBtn.isVisible()) {
-      await skipBtn.click();
-    }
-
-    const createBtn = page.getByRole("button", { name: /create org|finish/i });
-    if (await createBtn.isVisible()) {
-      await createBtn.click();
-    }
+    await page.getByLabel(/organization name|org name/i).fill(organizationName);
+    await page.getByTestId("create-org-btn").click();
 
     await page.waitForURL(/\/settings\/organizations\/\d+/);
-    await expect(page.getByText(/E2E Test Org/i)).toBeVisible();
+    await expect(page.getByText(organizationName)).toBeVisible();
+
+    await page.goto("/settings/organizations");
+    await expect(page.getByText(organizationName)).toBeVisible();
   });
 });
 
