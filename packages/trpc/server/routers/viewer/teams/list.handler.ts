@@ -1,10 +1,9 @@
 import prisma from "@calcom/prisma";
-
 import type { TrpcSessionUser } from "../../../types";
 
 type ListTeamsHandlerOptions = {
   ctx: {
-    user: Pick<NonNullable<TrpcSessionUser>, "id">;
+    user: Pick<NonNullable<TrpcSessionUser>, "id" | "organizationId">;
   };
 };
 
@@ -13,8 +12,15 @@ export const listTeamsHandler = async ({ ctx }: ListTeamsHandlerOptions) => {
     where: {
       members: { some: { userId: ctx.user.id, accepted: true } },
       isOrganization: false,
+      parentId: ctx.user.organizationId,
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      isPrivate: true,
+      parentId: true,
       members: {
         where: { accepted: true },
         select: {

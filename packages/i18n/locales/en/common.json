@@ -2925,6 +2925,8 @@
   "create_organization": "Create organization",
   "create_organization_description": "Set up a new organization for your teams.",
   "organization_created": "Organization created successfully",
+  "organization_directory_teams": "Teams",
+  "organization_directory_members": "Members",
   "organization_updated": "Organization updated successfully",
   "org_auto_accept_email_domain": "Auto-accept email domain",
   "organization_name_placeholder": "Acme Corp",

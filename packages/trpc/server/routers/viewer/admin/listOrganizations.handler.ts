@@ -2,7 +2,7 @@ import prisma from "@calcom/prisma";
 
 const listOrganizationsHandler = async () => {
   return prisma.team.findMany({
-    where: { isOrganization: true, parentId: null },
+    where: { isOrganization: true, parentId: null, deletedAt: null },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

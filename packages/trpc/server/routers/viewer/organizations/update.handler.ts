@@ -1,4 +1,4 @@
-import prisma from "@calcom/prisma";
+import { getOrganizationRepository } from "@calcom/features/organizations/di/PrismaOrganizationRepository.container";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { TRPCError } from "@trpc/server";
 import type { TrpcSessionUser } from "../../../types";
@@ -13,10 +13,9 @@ type UpdateOrgHandlerOptions = {
 
 export const updateOrganizationHandler = async ({ ctx, input }: UpdateOrgHandlerOptions) => {
   const { organizationId, name, slug, bio, orgAutoAcceptEmail } = input;
+  const repo = getOrganizationRepository();
 
-  const membership = await prisma.membership.findUnique({
-    where: { userId_teamId: { userId: ctx.user.id, teamId: organizationId } },
-  });
+  const membership = await repo.findMembershipByUserAndOrg(ctx.user.id, organizationId);
 
   if (!membership || !membership.accepted) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member of this organization" });
@@ -26,22 +25,5 @@ export const updateOrganizationHandler = async ({ ctx, input }: UpdateOrgHandler
     throw new TRPCError({ code: "FORBIDDEN", message: "Requires ADMIN or OWNER role" });
   }
 
-  const updated = await prisma.team.update({
-    where: { id: organizationId },
-    data: {
-      name,
-      slug,
-      bio,
-      ...(orgAutoAcceptEmail !== undefined && {
-        organizationSettings: {
-          update: {
-            orgAutoAcceptEmail,
-          },
-        },
-      }),
-    },
-    include: { organizationSettings: true },
-  });
-
-  return updated;
+  return repo.update(organizationId, { name, slug, bio, orgAutoAcceptEmail });
 };

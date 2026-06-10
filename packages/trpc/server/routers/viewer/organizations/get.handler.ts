@@ -1,4 +1,4 @@
-import prisma from "@calcom/prisma";
+import { getOrganizationRepository } from "@calcom/features/organizations/di/PrismaOrganizationRepository.container";
 import { TRPCError } from "@trpc/server";
 
 import type { TrpcSessionUser } from "../../../types";
@@ -12,19 +12,9 @@ type GetOrgHandlerOptions = {
 };
 
 export const getOrganizationHandler = async ({ ctx, input }: GetOrgHandlerOptions) => {
-  const org = await prisma.team.findUnique({
-    where: { id: input.organizationId, isOrganization: true },
-    include: {
-      organizationSettings: true,
-      members: {
-        where: { accepted: true },
-        select: {
-          role: true,
-          user: { select: { id: true, name: true, email: true, avatarUrl: true } },
-        },
-      },
-    },
-  });
+  const repo = getOrganizationRepository();
+
+  const org = await repo.findByIdIncludeMembersAndSettings(input.organizationId);
 
   if (!org) throw new TRPCError({ code: "NOT_FOUND" });
 

@@ -12,6 +12,7 @@ import { ZAdminPasswordResetSchema } from "./sendPasswordReset.schema";
 import { ZSetSMSLockState } from "./setSMSLockState.schema";
 import { toggleFeatureFlag } from "./toggleFeatureFlag.procedure";
 import { ZAdminUnassignFeatureFromTeamSchema } from "./unassignFeatureFromTeam.schema";
+import { ZAdminDeleteOrganizationSchema } from "./deleteOrganization.schema";
 import { ZAdminUpdateOrganizationSchema } from "./updateOrganization.schema";
 import { watchlistRouter } from "./watchlist/_router";
 
@@ -82,11 +83,9 @@ export const adminRouter = router({
     const { default: handler } = await import("./deleteTeam.handler");
     return handler(opts);
   }),
-  deleteOrganization: authedAdminProcedure
-    .input(z.object({ organizationId: z.number() }))
-    .mutation(async (opts) => {
-      const { default: handler } = await import("./deleteOrganization.handler");
-      return handler(opts);
-    }),
+  deleteOrganization: authedAdminProcedure.input(ZAdminDeleteOrganizationSchema).mutation(async (opts) => {
+    const { default: handler } = await import("./deleteOrganization.handler");
+    return handler(opts);
+  }),
   watchlist: watchlistRouter,
 });

@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { getOrganizationRepository } from "@calcom/features/organizations/di/PrismaOrganizationRepository.container";
+import type { PrismaOrganizationRepository } from "@calcom/features/organizations/di/PrismaOrganizationRepository.module";
 import { sendTeamInviteEmail } from "@calcom/emails/organization-email-service";
 import { getTranslation } from "@calcom/i18n/server";
 import { WEBAPP_URL } from "@calcom/lib/constants";
-import prisma from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { TRPCError } from "@trpc/server";
 import type { TrpcSessionUser } from "../../../types";
@@ -19,16 +20,19 @@ type Ctx = {
   user: Pick<NonNullable<TrpcSessionUser>, "id">;
 };
 
-async function assertOrgMembership(userId: number, organizationId: number, minRole: MembershipRole) {
-  const roleOrder: MembershipRole[] = [MembershipRole.MEMBER, MembershipRole.ADMIN, MembershipRole.OWNER];
-  const membership = await prisma.membership.findUnique({
-    where: { userId_teamId: { userId, teamId: organizationId } },
-    select: { role: true, accepted: true },
-  });
+const ROLE_ORDER: MembershipRole[] = [MembershipRole.MEMBER, MembershipRole.ADMIN, MembershipRole.OWNER];
+
+async function assertOrgMembership(
+  repo: PrismaOrganizationRepository,
+  userId: number,
+  organizationId: number,
+  minRole: MembershipRole
+) {
+  const membership = await repo.findMembershipByUserAndOrg(userId, organizationId);
   if (!membership || !membership.accepted) {
     throw new TRPCError({ code: "FORBIDDEN", message: "Not a member of this organization" });
   }
-  if (roleOrder.indexOf(membership.role) < roleOrder.indexOf(minRole)) {
+  if (ROLE_ORDER.indexOf(membership.role) < ROLE_ORDER.indexOf(minRole)) {
     throw new TRPCError({ code: "FORBIDDEN", message: `Requires ${minRole} role` });
   }
   return membership.role;
@@ -41,31 +45,25 @@ export const inviteOrganizationMemberHandler = async ({
   ctx: Ctx & { user: Pick<NonNullable<TrpcSessionUser>, "id" | "name" | "email"> };
   input: TInviteOrgMemberInputSchema;
 }) => {
-  await assertOrgMembership(ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+  const repo = getOrganizationRepository();
 
-  const org = await prisma.team.findUniqueOrThrow({
-    where: { id: input.organizationId },
-    select: { name: true, isOrganization: true },
-  });
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.ADMIN);
 
-  const invitee = await prisma.user.findUnique({
-    where: { email: input.email },
-    select: { id: true, locale: true },
-  });
+  const org = await repo.findById(input.organizationId);
+
+  const invitee = await repo.findUserByEmail(input.email);
 
   const t = await getTranslation(invitee?.locale ?? "en", "common");
   const joinLink = `${WEBAPP_URL}/settings/teams/${input.organizationId}/accept`;
 
   if (!invitee) {
     const token = randomUUID();
-    await prisma.verificationToken.create({
-      data: {
-        identifier: input.email,
-        token,
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        teamId: input.organizationId,
-        membershipRole: input.role,
-      },
+    await repo.createInviteToken({
+      identifier: input.email,
+      token,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      teamId: input.organizationId,
+      membershipRole: input.role,
     });
 
     await sendTeamInviteEmail({
@@ -86,13 +84,14 @@ export const inviteOrganizationMemberHandler = async ({
     return { status: "invited", email: input.email };
   }
 
-  const existing = await prisma.membership.findUnique({
-    where: { userId_teamId: { userId: invitee.id, teamId: input.organizationId } },
-  });
+  const existing = await repo.findMembershipByUserAndOrg(invitee.id, input.organizationId);
   if (existing) throw new TRPCError({ code: "BAD_REQUEST", message: "User is already a member" });
 
-  await prisma.membership.create({
-    data: { teamId: input.organizationId, userId: invitee.id, role: input.role, accepted: false },
+  await repo.createMembership({
+    teamId: input.organizationId,
+    userId: invitee.id,
+    role: input.role,
+    accepted: false,
   });
 
   await sendTeamInviteEmail({
@@ -120,19 +119,9 @@ export const getOrganizationMembersHandler = async ({
   ctx: Ctx;
   input: TGetOrgMembersInputSchema;
 }) => {
-  await assertOrgMembership(ctx.user.id, input.organizationId, MembershipRole.MEMBER);
-
-  return prisma.membership.findMany({
-    where: { teamId: input.organizationId },
-    orderBy: [{ accepted: "desc" }, { user: { email: "asc" } }],
-    select: {
-      role: true,
-      accepted: true,
-      user: {
-        select: { id: true, email: true, name: true, username: true, avatarUrl: true },
-      },
-    },
-  });
+  const repo = getOrganizationRepository();
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.MEMBER);
+  return repo.findMembersByOrg(input.organizationId);
 };
 
 export const removeOrganizationMemberHandler = async ({
@@ -142,23 +131,17 @@ export const removeOrganizationMemberHandler = async ({
   ctx: Ctx;
   input: TRemoveOrgMemberInputSchema;
 }) => {
-  const actorRole = await assertOrgMembership(ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+  const repo = getOrganizationRepository();
+  const actorRole = await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.ADMIN);
 
-  const target = await prisma.membership.findUnique({
-    where: { userId_teamId: { userId: input.memberId, teamId: input.organizationId } },
-    select: { role: true },
-  });
+  const target = await repo.findMembershipByUserAndOrg(input.memberId, input.organizationId);
   if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Membership not found" });
 
-  const roleOrder: MembershipRole[] = [MembershipRole.MEMBER, MembershipRole.ADMIN, MembershipRole.OWNER];
-  if (roleOrder.indexOf(actorRole) <= roleOrder.indexOf(target.role)) {
+  if (ROLE_ORDER.indexOf(actorRole) <= ROLE_ORDER.indexOf(target.role)) {
     throw new TRPCError({ code: "FORBIDDEN", message: "Cannot remove a member with equal or higher role" });
   }
 
-  await prisma.membership.delete({
-    where: { userId_teamId: { userId: input.memberId, teamId: input.organizationId } },
-  });
-
+  await repo.deleteMembership(input.memberId, input.organizationId);
   return { success: true };
 };
 
@@ -169,19 +152,13 @@ export const changeOrganizationMemberRoleHandler = async ({
   ctx: Ctx;
   input: TChangeOrgMemberRoleInputSchema;
 }) => {
-  await assertOrgMembership(ctx.user.id, input.organizationId, MembershipRole.OWNER);
+  const repo = getOrganizationRepository();
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.OWNER);
 
-  const target = await prisma.membership.findUnique({
-    where: { userId_teamId: { userId: input.memberId, teamId: input.organizationId } },
-    select: { role: true },
-  });
+  const target = await repo.findMembershipByUserAndOrg(input.memberId, input.organizationId);
   if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Membership not found" });
 
-  return prisma.membership.update({
-    where: { userId_teamId: { userId: input.memberId, teamId: input.organizationId } },
-    data: { role: input.role },
-    select: { teamId: true, userId: true, role: true, accepted: true },
-  });
+  return repo.updateMembershipRole(input.memberId, input.organizationId, input.role);
 };
 
 export const bulkRemoveOrganizationMembersHandler = async ({
@@ -191,17 +168,13 @@ export const bulkRemoveOrganizationMembersHandler = async ({
   ctx: Ctx;
   input: TBulkRemoveOrgMembersInputSchema;
 }) => {
-  const actorRole = await assertOrgMembership(ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+  const repo = getOrganizationRepository();
+  const actorRole = await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.ADMIN);
 
-  const roleOrder: MembershipRole[] = [MembershipRole.MEMBER, MembershipRole.ADMIN, MembershipRole.OWNER];
-
-  const targets = await prisma.membership.findMany({
-    where: { teamId: input.organizationId, userId: { in: input.memberIds } },
-    select: { userId: true, role: true },
-  });
+  const targets = await repo.findMembershipsByOrgAndUserIds(input.organizationId, input.memberIds);
 
   for (const target of targets) {
-    if (roleOrder.indexOf(actorRole) <= roleOrder.indexOf(target.role)) {
+    if (ROLE_ORDER.indexOf(actorRole) <= ROLE_ORDER.indexOf(target.role)) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: `Cannot remove member with id ${target.userId}: insufficient permissions`,
@@ -209,10 +182,7 @@ export const bulkRemoveOrganizationMembersHandler = async ({
     }
   }
 
-  await prisma.membership.deleteMany({
-    where: { teamId: input.organizationId, userId: { in: input.memberIds } },
-  });
-
+  await repo.deleteMemberships(input.organizationId, input.memberIds);
   return { success: true, removedCount: targets.length };
 };
 
@@ -223,18 +193,12 @@ export const bulkChangeOrganizationMemberRoleHandler = async ({
   ctx: Ctx;
   input: TBulkChangeOrgMemberRoleInputSchema;
 }) => {
-  await assertOrgMembership(ctx.user.id, input.organizationId, MembershipRole.OWNER);
+  const repo = getOrganizationRepository();
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.OWNER);
 
-  const targets = await prisma.membership.findMany({
-    where: { teamId: input.organizationId, userId: { in: input.memberIds } },
-    select: { userId: true },
-  });
+  const targets = await repo.findMembershipsByOrgAndUserIds(input.organizationId, input.memberIds);
   if (targets.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "No matching members found" });
 
-  await prisma.membership.updateMany({
-    where: { teamId: input.organizationId, userId: { in: input.memberIds } },
-    data: { role: input.role },
-  });
-
+  await repo.updateMembershipsRole(input.organizationId, input.memberIds, input.role);
   return { success: true, updatedCount: targets.length };
 };

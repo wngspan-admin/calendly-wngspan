@@ -25,7 +25,7 @@ type Props = {
   isBrandingHidden: boolean;
   isSEOIndexable: boolean | null;
   themeBasis: null | string;
-  orgBannerUrl: null;
+  orgBannerUrl: string | null;
 };
 
 async function processReschedule({
@@ -53,13 +53,16 @@ async function processReschedule({
   }
 
   // if no booking found, no eventTypeId (dynamic) or it matches this eventData - return void (success).
+  const allowReschedulingCancelledBookings =
+    "allowReschedulingCancelledBookings" in props.eventData &&
+    props.eventData.allowReschedulingCancelledBookings === true;
   if (
     booking === null ||
     !booking.eventTypeId ||
     (booking?.eventTypeId === props.eventData?.id &&
       (booking.status !== BookingStatus.CANCELLED ||
         allowRescheduleForCancelledBooking ||
-        !!(props.eventData as any)?.allowReschedulingCancelledBookings))
+        allowReschedulingCancelledBookings))
   ) {
     props.booking = booking;
     props.rescheduleUid = Array.isArray(rescheduleUid) ? rescheduleUid[0] : rescheduleUid;
@@ -306,6 +309,83 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
   };
 }
 
+async function getTeamPageProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession({ req: context.req });
+  const organizationSlug = z.string().parse(context.params?.orgSlug);
+  const teamSlug = z
+    .string()
+    .transform((value) => slugify(value))
+    .parse(context.params?.teamSlug);
+  const eventSlug = z
+    .string()
+    .transform((value) => slugify(value))
+    .parse(context.params?.type);
+  const { rescheduleUid, bookingUid } = context.query;
+  const allowRescheduleForCancelledBooking = context.query.allowRescheduleForCancelledBooking === "true";
+
+  const team = await prisma.team.findFirst({
+    where: {
+      slug: teamSlug,
+      isOrganization: false,
+      parent: { slug: organizationSlug, isOrganization: true },
+    },
+    select: {
+      slug: true,
+      hideBranding: true,
+      parent: {
+        select: {
+          bannerUrl: true,
+          organizationSettings: { select: { allowSEOIndexing: true } },
+        },
+      },
+    },
+  });
+  if (!team) return { notFound: true } as const;
+
+  const eventData = await EventRepository.getPublicEvent(
+    {
+      username: teamSlug,
+      eventSlug,
+      isTeamEvent: true,
+      org: organizationSlug,
+      fromRedirectOfNonOrgLink: false,
+    },
+    session?.user?.id
+  );
+  if (!eventData) return { notFound: true } as const;
+
+  const props: Props = {
+    eventData,
+    user: teamSlug,
+    slug: eventSlug,
+    isBrandingHidden: team.hideBranding,
+    isSEOIndexable: team.parent?.organizationSettings?.allowSEOIndexing ?? false,
+    themeBasis: teamSlug,
+    bookingUid: bookingUid ? `${bookingUid}` : null,
+    rescheduleUid: null,
+    orgBannerUrl: team.parent?.bannerUrl ?? null,
+  };
+
+  if (rescheduleUid) {
+    const result = await processReschedule({
+      props,
+      rescheduleUid,
+      session,
+      allowRescheduleForCancelledBooking,
+    });
+    if (result) return result;
+  } else if (bookingUid) {
+    const result = await processSeatedEvent({
+      props,
+      bookingUid,
+      allowRescheduleForCancelledBooking,
+    });
+    if (result) return result;
+  }
+
+  return { props };
+}
+
 const paramsSchema = z.object({
   type: z.string().transform((s) => slugify(s)),
   user: z.string().transform((s) => getUsernameList(s)),
@@ -314,6 +394,8 @@ const paramsSchema = z.object({
 // Booker page fetches a tiny bit of data server side, to determine early
 // whether the page should show an away state or dynamic booking not allowed.
 export const getServerSideProps = async (context: GetServerSidePropsContext) => {
+  if (context.params?.teamSlug) return getTeamPageProps(context);
+
   const { user } = paramsSchema.parse(context.params);
   const isDynamicGroup = user.length > 1;
 

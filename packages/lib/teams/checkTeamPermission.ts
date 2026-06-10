@@ -1,7 +1,7 @@
-import prisma from "@calcom/prisma";
-import type { MembershipRole, Membership } from "@calcom/prisma/client";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
+import prisma from "@calcom/prisma";
+import type { Membership, MembershipRole } from "@calcom/prisma/client";
 
 const ROLE_HIERARCHY: Record<MembershipRole, number> = {
   MEMBER: 0,
@@ -12,30 +12,37 @@ const ROLE_HIERARCHY: Record<MembershipRole, number> = {
 export async function checkTeamPermission(
   userId: number,
   teamId: number,
-  requiredRole: MembershipRole
+  requiredRole: MembershipRole,
+  organizationId?: number | null
 ): Promise<Membership> {
-  const membership = await prisma.membership.findUnique({
+  const result = await prisma.membership.findUnique({
     where: { userId_teamId: { userId, teamId } },
+    include: {
+      team: { select: { parentId: true } },
+    },
   });
 
-  if (!membership || !membership.accepted) {
+  if (!result || !result.accepted) {
     throw new ErrorWithCode(ErrorCode.Unauthorized, "Not a member of this team");
   }
 
-  if (ROLE_HIERARCHY[membership.role] < ROLE_HIERARCHY[requiredRole]) {
-    throw new ErrorWithCode(
-      ErrorCode.Forbidden,
-      `Requires ${requiredRole} role, you have ${membership.role}`
-    );
+  // Org isolation: verify the team belongs to the caller's organization when provided.
+  // parentId === organizationId covers:
+  //   - org users (organizationId !== null) who must match team.parentId
+  //   - standalone users (organizationId === null) who may only access parentId-null teams
+  if (organizationId !== undefined && result.team.parentId !== organizationId) {
+    throw new ErrorWithCode(ErrorCode.Forbidden, "Team does not belong to your organization");
   }
 
-  return membership;
+  if (ROLE_HIERARCHY[result.role] < ROLE_HIERARCHY[requiredRole]) {
+    throw new ErrorWithCode(ErrorCode.Forbidden, `Requires ${requiredRole} role, you have ${result.role}`);
+  }
+
+  const { team: _team, ...membership } = result;
+  return membership as Membership;
 }
 
-export async function getUserTeamRole(
-  userId: number,
-  teamId: number
-): Promise<MembershipRole | null> {
+export async function getUserTeamRole(userId: number, teamId: number): Promise<MembershipRole | null> {
   const membership = await prisma.membership.findUnique({
     where: { userId_teamId: { userId, teamId } },
     select: { role: true, accepted: true },
@@ -44,10 +51,7 @@ export async function getUserTeamRole(
   return membership.role;
 }
 
-export function canPerformAction(
-  userRole: MembershipRole | null,
-  requiredRole: MembershipRole
-): boolean {
+export function canPerformAction(userRole: MembershipRole | null, requiredRole: MembershipRole): boolean {
   if (!userRole) return false;
   return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
 }

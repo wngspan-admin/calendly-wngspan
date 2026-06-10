@@ -541,6 +541,7 @@ model Profile {
   organizationId Int
   organization   Team        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   username       String
+  isListed       Boolean     @default(false)
   eventTypes     EventType[]
   movedFromUser  User?       @relation("moved_to_profile")
   createdAt      DateTime    @default(now())
@@ -571,10 +572,12 @@ model Team {
   hideBranding           Boolean                 @default(false)
   hideTeamProfileLink    Boolean                 @default(false)
   isPrivate              Boolean                 @default(false)
+  isListed               Boolean                 @default(false)
   hideBookATeamMember    Boolean                 @default(false)
   members                Membership[]
   eventTypes             EventType[]
   createdAt              DateTime                @default(now())
+  deletedAt              DateTime?
   /// @zod.import(["import { teamMetadataSchema } from '../../zod-utils'"]).custom.use(teamMetadataSchema)
   metadata               Json?
   theme                  String?
@@ -724,6 +727,7 @@ model OrganizationSettings {
   disablePhoneOnlySMSNotifications    Boolean    @default(false)
   disableAutofillOnBookingPage        Boolean    @default(false)
   orgAutoJoinOnSignup                 Boolean    @default(true)
+  onboardingCompletedAt               DateTime?
 
   disableAttendeeConfirmationEmail      Boolean @default(false)
   disableAttendeeCancellationEmail      Boolean @default(false)
@@ -1634,6 +1638,25 @@ model TempOrgRedirect {
   updatedAt DateTime     @updatedAt
 
   @@unique([from, type, fromOrgId])
+}
+
+enum PublicRouteEntityType {
+  ORGANIZATION
+  MEMBER
+  TEAM
+  EVENT
+}
+
+model PublicRouteRedirect {
+  id              String                @id @default(cuid())
+  sourcePath      String                @unique
+  destinationPath String
+  entityType      PublicRouteEntityType
+  enabled         Boolean               @default(true)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([enabled, sourcePath])
 }
 
 model Avatar {

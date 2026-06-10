@@ -11,13 +11,13 @@ import type { TInviteMemberInputSchema } from "./inviteMember.schema";
 
 type InviteMemberHandlerOptions = {
   ctx: {
-    user: Pick<NonNullable<TrpcSessionUser>, "id" | "name" | "email">;
+    user: Pick<NonNullable<TrpcSessionUser>, "id" | "name" | "email" | "organizationId">;
   };
   input: TInviteMemberInputSchema;
 };
 
 export const inviteMemberHandler = async ({ ctx, input }: InviteMemberHandlerOptions) => {
-  await checkTeamPermission(ctx.user.id, input.teamId, MembershipRole.ADMIN);
+  await checkTeamPermission(ctx.user.id, input.teamId, MembershipRole.ADMIN, ctx.user.organizationId);
 
   const team = await prisma.team.findUniqueOrThrow({
     where: { id: input.teamId },

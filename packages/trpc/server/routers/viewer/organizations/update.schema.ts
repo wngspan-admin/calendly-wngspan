@@ -1,3 +1,4 @@
+import { isReservedOrganizationSlug } from "@calcom/lib/publicRoutes";
 import { z } from "zod";
 
 export const ZUpdateOrgInputSchema = z.object({
@@ -7,7 +8,8 @@ export const ZUpdateOrgInputSchema = z.object({
     .string()
     .min(1)
     .max(50)
-    .regex(/^[a-z0-9-]+$/),
+    .regex(/^[a-z0-9-]+$/)
+    .refine((slug) => !isReservedOrganizationSlug(slug), "This organization slug is reserved"),
   bio: z.string().max(500).optional(),
   orgAutoAcceptEmail: z.string().optional(),
 });
