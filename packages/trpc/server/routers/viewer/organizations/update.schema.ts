@@ -11,6 +11,10 @@ export const ZUpdateOrgInputSchema = z.object({
     .regex(/^[a-z0-9-]+$/)
     .refine((slug) => !isReservedOrganizationSlug(slug), "This organization slug is reserved"),
   bio: z.string().max(500).optional(),
+  logoUrl: z.string().url().optional(),
+  bannerUrl: z.string().url().optional(),
+  brandColor: z.string().max(20).optional(),
+  darkBrandColor: z.string().max(20).optional(),
   orgAutoAcceptEmail: z.string().optional(),
 });
 

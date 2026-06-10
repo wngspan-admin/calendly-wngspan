@@ -18,6 +18,10 @@ type UpdateOrgData = {
   name?: string;
   slug?: string;
   bio?: string | null;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  brandColor?: string | null;
+  darkBrandColor?: string | null;
   orgAutoAcceptEmail?: string | null;
 };
 
@@ -41,6 +45,10 @@ const orgWithSettingsSelect = {
   name: true,
   slug: true,
   bio: true,
+  logoUrl: true,
+  bannerUrl: true,
+  brandColor: true,
+  darkBrandColor: true,
   isOrganization: true,
   organizationSettings: {
     select: {
@@ -153,6 +161,10 @@ export class PrismaOrganizationRepository {
         data: {
           name: data.name,
           bio: data.bio,
+          logoUrl: data.logoUrl,
+          bannerUrl: data.bannerUrl,
+          brandColor: data.brandColor,
+          darkBrandColor: data.darkBrandColor,
           ...(data.orgAutoAcceptEmail !== undefined && {
             organizationSettings: {
               update: { orgAutoAcceptEmail: data.orgAutoAcceptEmail ?? "" },
@@ -198,6 +210,10 @@ export class PrismaOrganizationRepository {
           name: data.name,
           slug: nextSlug,
           bio: data.bio,
+          logoUrl: data.logoUrl,
+          bannerUrl: data.bannerUrl,
+          brandColor: data.brandColor,
+          darkBrandColor: data.darkBrandColor,
           ...(data.orgAutoAcceptEmail !== undefined && {
             organizationSettings: {
               update: { orgAutoAcceptEmail: data.orgAutoAcceptEmail ?? "" },

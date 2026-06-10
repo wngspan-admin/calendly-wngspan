@@ -12,7 +12,17 @@ type UpdateOrgHandlerOptions = {
 };
 
 export const updateOrganizationHandler = async ({ ctx, input }: UpdateOrgHandlerOptions) => {
-  const { organizationId, name, slug, bio, orgAutoAcceptEmail } = input;
+  const {
+    organizationId,
+    name,
+    slug,
+    bio,
+    logoUrl,
+    bannerUrl,
+    brandColor,
+    darkBrandColor,
+    orgAutoAcceptEmail,
+  } = input;
   const repo = getOrganizationRepository();
 
   const membership = await repo.findMembershipByUserAndOrg(ctx.user.id, organizationId);
@@ -25,5 +35,14 @@ export const updateOrganizationHandler = async ({ ctx, input }: UpdateOrgHandler
     throw new TRPCError({ code: "FORBIDDEN", message: "Requires ADMIN or OWNER role" });
   }
 
-  return repo.update(organizationId, { name, slug, bio, orgAutoAcceptEmail });
+  return repo.update(organizationId, {
+    name,
+    slug,
+    bio,
+    logoUrl,
+    bannerUrl,
+    brandColor,
+    darkBrandColor,
+    orgAutoAcceptEmail,
+  });
 };

@@ -10,6 +10,10 @@ import {
   ZInviteOrgMemberInputSchema,
   ZRemoveOrgMemberInputSchema,
 } from "./members.schema";
+import {
+  ZCompleteOrganizationOnboardingSchema,
+  ZUpdateOrganizationProfileSlugSchema,
+} from "./onboarding.schema";
 import { ZUpdateOrgInputSchema } from "./update.schema";
 
 export const organizationsRouter = router({
@@ -32,6 +36,20 @@ export const organizationsRouter = router({
     const { updateOrganizationHandler } = await import("./update.handler");
     return updateOrganizationHandler({ ctx, input });
   }),
+
+  updateProfileSlug: authedProcedure
+    .input(ZUpdateOrganizationProfileSlugSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { updateOrganizationProfileSlugHandler } = await import("./onboarding.handler");
+      return updateOrganizationProfileSlugHandler({ ctx, input });
+    }),
+
+  completeOnboarding: authedProcedure
+    .input(ZCompleteOrganizationOnboardingSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { completeOrganizationOnboardingHandler } = await import("./onboarding.handler");
+      return completeOrganizationOnboardingHandler({ ctx, input });
+    }),
 
   inviteMember: authedProcedure.input(ZInviteOrgMemberInputSchema).mutation(async ({ ctx, input }) => {
     const { inviteOrganizationMemberHandler } = await import("./members.handler");
