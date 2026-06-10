@@ -21,7 +21,6 @@ const mockOrg = {
   createdAt: new Date("2024-01-01"),
   organizationSettings: {
     orgAutoAcceptEmail: "acme.com",
-    isOrganizationVerified: false,
   },
 };
 
@@ -35,17 +34,15 @@ describe("updateOrganizationHandler", () => {
   it("throws NOT_FOUND when organization does not exist", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
-    await expect(
-      updateOrganizationHandler({ input: { organizationId: 99 } })
-    ).rejects.toThrow(TRPCError);
+    await expect(updateOrganizationHandler({ input: { organizationId: 99 } })).rejects.toThrow(TRPCError);
   });
 
   it("throws NOT_FOUND when team is not an organization", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValue({ id: 1, isOrganization: false } as never);
 
-    await expect(
-      updateOrganizationHandler({ input: { organizationId: 1 } })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(updateOrganizationHandler({ input: { organizationId: 1 } })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
   });
 
   it("updates name when provided", async () => {
@@ -63,15 +60,6 @@ describe("updateOrganizationHandler", () => {
 
     const callData = vi.mocked(prisma.team.update).mock.calls[0][0].data;
     expect(callData).not.toHaveProperty("name");
-  });
-
-  it("upserts organizationSettings when isOrganizationVerified is provided", async () => {
-    await updateOrganizationHandler({ input: { organizationId: 1, isOrganizationVerified: true } });
-
-    const callData = vi.mocked(prisma.team.update).mock.calls[0][0].data;
-    expect(callData.organizationSettings?.upsert?.update).toMatchObject({
-      isOrganizationVerified: true,
-    });
   });
 
   it("upserts organizationSettings when orgAutoAcceptEmail is provided", async () => {

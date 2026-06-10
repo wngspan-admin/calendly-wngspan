@@ -18,7 +18,7 @@ const mockOrgs = [
     name: "Acme Corp",
     slug: "acme",
     createdAt: new Date("2024-01-01"),
-    organizationSettings: { orgAutoAcceptEmail: "acme.com", isOrganizationVerified: true },
+    organizationSettings: { orgAutoAcceptEmail: "acme.com" },
     _count: { members: 5, children: 2 },
   },
   {
@@ -42,7 +42,7 @@ describe("listOrganizationsHandler", () => {
 
     expect(prisma.team.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { isOrganization: true, parentId: null },
+        where: { isOrganization: true, parentId: null, deletedAt: null },
       })
     );
   });

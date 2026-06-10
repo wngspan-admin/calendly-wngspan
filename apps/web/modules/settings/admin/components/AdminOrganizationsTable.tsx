@@ -1,7 +1,6 @@
 "use client";
 
 import { trpc } from "@calcom/trpc/react";
-import { Badge } from "@calcom/ui/components/badge";
 import { Button } from "@calcom/ui/components/button";
 import { ConfirmationDialogContent, Dialog } from "@calcom/ui/components/dialog";
 import { TextField } from "@calcom/ui/components/form";
@@ -20,18 +19,11 @@ type OrgRow = {
   createdAt: Date | string;
   organizationSettings: {
     orgAutoAcceptEmail: string | null;
-    isOrganizationVerified: boolean;
   } | null;
   _count: { members: number; children: number };
 };
 
-function EditOrgForm({
-  org,
-  onDone,
-}: {
-  org: OrgRow;
-  onDone: () => void;
-}): ReactElement {
+function EditOrgForm({ org, onDone }: { org: OrgRow; onDone: () => void }): ReactElement {
   const utils = trpc.useUtils();
   const [name, setName] = useState(org.name);
   const [domain, setDomain] = useState(org.organizationSettings?.orgAutoAcceptEmail ?? "");
@@ -46,13 +38,9 @@ function EditOrgForm({
   });
 
   return (
-    <div className="mt-4 space-y-3 border-t border-subtle pt-4">
+    <div className="mt-4 space-y-3 border-subtle border-t pt-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} />
         <TextField
           label="Auto-accept email domain"
           placeholder="company.com"
@@ -100,14 +88,6 @@ export function AdminOrganizationsTable(): ReactElement {
 
   const orgToDelete = organizations?.find((o) => o.id === deletingId);
 
-  const updateMutation = trpc.viewer.admin.updateOrganization.useMutation({
-    onSuccess: async () => {
-      await utils.viewer.admin.listOrganizations.invalidate();
-      showToast("Organization updated", "success");
-    },
-    onError: (err) => showToast(err.message, "error"),
-  });
-
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -128,86 +108,62 @@ export function AdminOrganizationsTable(): ReactElement {
 
   return (
     <>
-    <div className="space-y-4">
-      {organizations.map((org) => {
-        const isVerified = org.organizationSettings?.isOrganizationVerified ?? false;
-        const domain = org.organizationSettings?.orgAutoAcceptEmail;
-        const isEditing = editingId === org.id;
-        const isTogglingThisOrg =
-          updateMutation.isPending && updateMutation.variables?.organizationId === org.id;
+      <div className="space-y-4">
+        {organizations.map((org) => {
+          const domain = org.organizationSettings?.orgAutoAcceptEmail;
+          const isEditing = editingId === org.id;
 
-        return (
-          <div key={org.id} className="rounded-[14px] border border-subtle bg-default p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate font-semibold text-emphasis">{org.name}</h2>
-                  <Badge variant={isVerified ? "green" : "warning"}>
-                    {isVerified ? "Verified" : "Unverified"}
-                  </Badge>
+          return (
+            <div key={org.id} className="rounded-[14px] border border-subtle bg-default p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="truncate font-semibold text-emphasis">{org.name}</h2>
+                  </div>
+                  <p className="mt-1 text-default text-sm">/{org.slug}</p>
+                  {domain && <p className="mt-1 text-muted text-sm">Domain: {domain}</p>}
+                  <p className="mt-1 text-muted text-sm">Created: {formatDate(org.createdAt)}</p>
                 </div>
-                <p className="mt-1 text-default text-sm">/{org.slug}</p>
-                {domain && (
-                  <p className="mt-1 text-muted text-sm">Domain: {domain}</p>
-                )}
-                <p className="mt-1 text-muted text-sm">Created: {formatDate(org.createdAt)}</p>
+
+                <div className="shrink-0 text-right text-default text-sm">
+                  <p>
+                    {org._count.members} member{org._count.members !== 1 ? "s" : ""}
+                  </p>
+                  <p className="mt-1">
+                    {org._count.children} team{org._count.children !== 1 ? "s" : ""}
+                  </p>
+                </div>
               </div>
 
-              <div className="shrink-0 text-right text-default text-sm">
-                <p>{org._count.members} member{org._count.members !== 1 ? "s" : ""}</p>
-                <p className="mt-1">{org._count.children} team{org._count.children !== 1 ? "s" : ""}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button color="secondary" size="sm" onClick={() => setEditingId(isEditing ? null : org.id)}>
+                  {isEditing ? "Close" : "Edit settings"}
+                </Button>
+                <Button color="destructive" size="sm" onClick={() => setDeletingId(org.id)}>
+                  Delete
+                </Button>
               </div>
+
+              {isEditing && <EditOrgForm org={org} onDone={() => setEditingId(null)} />}
             </div>
+          );
+        })}
+      </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                color="secondary"
-                size="sm"
-                loading={isTogglingThisOrg && !isEditing}
-                onClick={() =>
-                  updateMutation.mutate({
-                    organizationId: org.id,
-                    isOrganizationVerified: !isVerified,
-                  })
-                }>
-                {isVerified ? "Unverify" : "Verify"}
-              </Button>
-              <Button
-                color="secondary"
-                size="sm"
-                onClick={() => setEditingId(isEditing ? null : org.id)}>
-                {isEditing ? "Close" : "Edit settings"}
-              </Button>
-              <Button
-                color="destructive"
-                size="sm"
-                onClick={() => setDeletingId(org.id)}>
-                Delete
-              </Button>
-            </div>
-
-            {isEditing && (
-              <EditOrgForm org={org} onDone={() => setEditingId(null)} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-
-    <Dialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
-      <ConfirmationDialogContent
-        title="Delete organization"
-        confirmBtnText="Delete"
-        cancelBtnText="Cancel"
-        variety="danger"
-        isPending={deleteMutation.isPending}
-        onConfirm={() => deletingId !== null && deleteMutation.mutate({ organizationId: deletingId })}>
-        <p>
-          Are you sure you want to delete <strong>{orgToDelete?.name}</strong>? This will permanently
-          remove the organization, all its teams, and all members. This action cannot be undone.
-        </p>
-      </ConfirmationDialogContent>
-    </Dialog>
+      <Dialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <ConfirmationDialogContent
+          title="Delete organization"
+          confirmBtnText="Delete"
+          cancelBtnText="Cancel"
+          variety="danger"
+          isPending={deleteMutation.isPending}
+          onConfirm={() => deletingId !== null && deleteMutation.mutate({ organizationId: deletingId })}>
+          <p>
+            Are you sure you want to delete <strong>{orgToDelete?.name}</strong>? This will permanently remove
+            the organization, all its teams, and all members. This action cannot be undone.
+          </p>
+        </ConfirmationDialogContent>
+      </Dialog>
     </>
   );
 }

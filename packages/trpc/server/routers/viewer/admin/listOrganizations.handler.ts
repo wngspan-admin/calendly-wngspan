@@ -12,7 +12,6 @@ const listOrganizationsHandler = async () => {
       organizationSettings: {
         select: {
           orgAutoAcceptEmail: true,
-          isOrganizationVerified: true,
         },
       },
       _count: {
