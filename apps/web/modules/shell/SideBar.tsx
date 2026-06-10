@@ -1,9 +1,7 @@
-import { ENABLE_PROFILE_SWITCHER, IS_VISUAL_REGRESSION_TESTING, WEBAPP_URL } from "@calcom/lib/constants";
-import { getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
+import { IS_VISUAL_REGRESSION_TESTING, WEBAPP_URL } from "@calcom/lib/constants";
 import { useIsStandalone } from "@calcom/lib/hooks/useIsStandalone";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import classNames from "@calcom/ui/classNames";
-import { Avatar } from "@calcom/ui/components/avatar";
 import { Credits } from "@calcom/ui/components/credits";
 import { ButtonOrLink } from "@calcom/ui/components/dropdown";
 import { Icon } from "@calcom/ui/components/icon";
@@ -69,22 +67,7 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
           </Link>
           <header className="todesktop:-mt-3 todesktop:flex-col-reverse items-center justify-between todesktop:[-webkit-app-region:drag] md:hidden lg:flex">
             {user?.org ? (
-              !ENABLE_PROFILE_SWITCHER ? (
-                <Link href="/settings/organizations/profile" className="w-full px-1.5">
-                  <div className="flex items-center gap-2 font-medium">
-                    <Avatar
-                      alt={`${user.org.name} logo`}
-                      imageSrc={getPlaceholderAvatar(user.org.logoUrl, user.org.name)}
-                      size="xsm"
-                    />
-                    <p className="text line-clamp-1 text-sm">
-                      <span>{user.org.name}</span>
-                    </p>
-                  </div>
-                </Link>
-              ) : (
-                <ProfileDropdown />
-              )
+              <ProfileDropdown />
             ) : (
               <div data-testid="user-dropdown-trigger" className="todesktop:mt-4 w-full">
                 <span className="hidden lg:inline">

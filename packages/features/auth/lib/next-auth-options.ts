@@ -15,7 +15,6 @@ import { UserRepository } from "@calcom/features/users/repositories/UserReposito
 import { isPasswordValid } from "@calcom/lib/auth/isPasswordValid";
 import { checkRateLimitAndThrowError } from "@calcom/lib/checkRateLimitAndThrowError";
 import {
-  ENABLE_PROFILE_SWITCHER,
   GOOGLE_CALENDAR_SCOPES,
   GOOGLE_OAUTH_SCOPES,
   HOSTED_CAL_FEATURES,
@@ -1220,11 +1219,6 @@ const determineProfile = ({
   token: JWT;
   profiles: { id: number | null; upId: string }[];
 }) => {
-  // If profile switcher is disabled, we can only show the first profile.
-  if (!ENABLE_PROFILE_SWITCHER) {
-    return profiles[0];
-  }
-
   if (token.upId) {
     // Otherwise use what's in the token
     return { profileId: token.profileId, upId: token.upId as string };

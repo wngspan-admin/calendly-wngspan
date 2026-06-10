@@ -56,7 +56,7 @@ export const inviteOrganizationMemberHandler = async ({
   const invitee = await repo.findUserByEmail(input.email);
 
   const t = await getTranslation(invitee?.locale ?? "en", "common");
-  const joinLink = `${WEBAPP_URL}/settings/teams/${input.organizationId}/accept`;
+  const joinLink = `${WEBAPP_URL}/settings/organizations/${input.organizationId}/accept`;
 
   if (!invitee) {
     const token = randomUUID();
