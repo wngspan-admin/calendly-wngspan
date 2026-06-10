@@ -21,6 +21,7 @@ export const getTeamHandler = async ({ ctx, input }: GetTeamHandlerOptions) => {
       bio: true,
       logoUrl: true,
       isPrivate: true,
+      isListed: true,
       hideBranding: true,
       isOrganization: true,
       parentId: true,

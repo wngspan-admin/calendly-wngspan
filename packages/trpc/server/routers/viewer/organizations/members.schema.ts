@@ -39,9 +39,16 @@ export const ZBulkChangeOrgMemberRoleInputSchema = z.object({
   role: z.nativeEnum(MembershipRole),
 });
 
+export const ZUpdateOrgMemberListingInputSchema = z.object({
+  organizationId: z.number(),
+  memberId: z.number(),
+  isListed: z.boolean(),
+});
+
 export type TGetOrgMembersInputSchema = z.infer<typeof ZGetOrgMembersInputSchema>;
 export type TInviteOrgMemberInputSchema = z.infer<typeof ZInviteOrgMemberInputSchema>;
 export type TRemoveOrgMemberInputSchema = z.infer<typeof ZRemoveOrgMemberInputSchema>;
 export type TChangeOrgMemberRoleInputSchema = z.infer<typeof ZChangeOrgMemberRoleInputSchema>;
 export type TBulkRemoveOrgMembersInputSchema = z.infer<typeof ZBulkRemoveOrgMembersInputSchema>;
 export type TBulkChangeOrgMemberRoleInputSchema = z.infer<typeof ZBulkChangeOrgMemberRoleInputSchema>;
+export type TUpdateOrgMemberListingInputSchema = z.infer<typeof ZUpdateOrgMemberListingInputSchema>;

@@ -242,7 +242,18 @@ export class PrismaOrganizationRepository {
         role: true,
         accepted: true,
         user: {
-          select: { id: true, email: true, name: true, username: true, avatarUrl: true },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            username: true,
+            avatarUrl: true,
+            profiles: {
+              where: { organizationId: orgId },
+              select: { isListed: true },
+              take: 1,
+            },
+          },
         },
       },
     });

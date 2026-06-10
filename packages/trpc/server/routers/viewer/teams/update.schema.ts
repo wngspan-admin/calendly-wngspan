@@ -12,6 +12,7 @@ export const ZUpdateTeamInputSchema = z.object({
   bio: z.string().max(500).optional(),
   logoUrl: z.string().url().optional().nullable(),
   isPrivate: z.boolean().optional(),
+  isListed: z.boolean().optional(),
   hideBranding: z.boolean().optional(),
 });
 

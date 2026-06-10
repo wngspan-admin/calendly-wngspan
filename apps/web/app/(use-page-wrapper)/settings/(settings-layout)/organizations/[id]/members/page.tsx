@@ -1,10 +1,11 @@
 "use client";
 
+import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { trpc } from "@calcom/trpc/react";
 import { Avatar } from "@calcom/ui/components/avatar";
 import { Button } from "@calcom/ui/components/button";
-import { Select, TextField } from "@calcom/ui/components/form";
+import { Select, Switch, TextField } from "@calcom/ui/components/form";
 import { showToast } from "@calcom/ui/components/toast";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -24,7 +25,9 @@ function _canManage(actorRole: MembershipRole | undefined, targetRole: Membershi
   return roleOrder.indexOf(actorRole) >= roleOrder.indexOf(targetRole);
 }
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: This existing page coordinates related member actions.
 export default function OrganizationMembersPage() {
+  const { t } = useLocale();
   const params = useParams();
   const organizationId = useMemo(() => Number(params?.id ?? ""), [params?.id]);
   const utils = trpc.useUtils();
@@ -76,6 +79,11 @@ export default function OrganizationMembersPage() {
       await invalidate();
       showToast("Role updated", "success");
     },
+    onError: (err) => showToast(err.message, "error"),
+  });
+
+  const updateListingMutation = trpc.viewer.organizations.updateMemberListing.useMutation({
+    onSuccess: invalidate,
     onError: (err) => showToast(err.message, "error"),
   });
 
@@ -243,6 +251,25 @@ export default function OrganizationMembersPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {member.accepted && member.user.profiles[0] && (
+                      <label className="flex items-center gap-2 text-default text-sm">
+                        {t("listed")}
+                        <Switch
+                          checked={member.user.profiles[0].isListed}
+                          disabled={
+                            updateListingMutation.isPending &&
+                            updateListingMutation.variables?.memberId === member.user.id
+                          }
+                          onCheckedChange={(isListed) =>
+                            updateListingMutation.mutate({
+                              organizationId,
+                              memberId: member.user.id,
+                              isListed,
+                            })
+                          }
+                        />
+                      </label>
+                    )}
                     {!member.accepted && (
                       <span className="rounded-full bg-subtle px-2 py-0.5 font-medium text-default text-xs">
                         Pending

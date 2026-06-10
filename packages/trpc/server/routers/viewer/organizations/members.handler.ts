@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { sendTeamInviteEmail } from "@calcom/emails/organization-email-service";
 import { getOrganizationRepository } from "@calcom/features/organizations/di/PrismaOrganizationRepository.container";
 import type { PrismaOrganizationRepository } from "@calcom/features/organizations/di/PrismaOrganizationRepository.module";
-import { sendTeamInviteEmail } from "@calcom/emails/organization-email-service";
 import { getTranslation } from "@calcom/i18n/server";
 import { WEBAPP_URL } from "@calcom/lib/constants";
+import { prisma } from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { TRPCError } from "@trpc/server";
 import type { TrpcSessionUser } from "../../../types";
@@ -14,6 +15,7 @@ import type {
   TGetOrgMembersInputSchema,
   TInviteOrgMemberInputSchema,
   TRemoveOrgMemberInputSchema,
+  TUpdateOrgMemberListingInputSchema,
 } from "./members.schema";
 
 type Ctx = {
@@ -122,6 +124,32 @@ export const getOrganizationMembersHandler = async ({
   const repo = getOrganizationRepository();
   await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.MEMBER);
   return repo.findMembersByOrg(input.organizationId);
+};
+
+export const updateOrganizationMemberListingHandler = async ({
+  ctx,
+  input,
+}: {
+  ctx: Ctx;
+  input: TUpdateOrgMemberListingInputSchema;
+}) => {
+  const repo = getOrganizationRepository();
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+
+  const target = await repo.findMembershipByUserAndOrg(input.memberId, input.organizationId);
+  if (!target?.accepted) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Organization member not found" });
+  }
+
+  const result = await prisma.profile.updateMany({
+    where: { userId: input.memberId, organizationId: input.organizationId },
+    data: { isListed: input.isListed },
+  });
+  if (!result.count) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Organization profile not found" });
+  }
+
+  return { isListed: input.isListed };
 };
 
 export const removeOrganizationMemberHandler = async ({

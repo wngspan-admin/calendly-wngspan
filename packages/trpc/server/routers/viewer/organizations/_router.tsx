@@ -9,6 +9,7 @@ import {
   ZGetOrgMembersInputSchema,
   ZInviteOrgMemberInputSchema,
   ZRemoveOrgMemberInputSchema,
+  ZUpdateOrgMemberListingInputSchema,
 } from "./members.schema";
 import {
   ZCompleteOrganizationOnboardingSchema,
@@ -60,6 +61,13 @@ export const organizationsRouter = router({
     const { getOrganizationMembersHandler } = await import("./members.handler");
     return getOrganizationMembersHandler({ ctx, input });
   }),
+
+  updateMemberListing: authedProcedure
+    .input(ZUpdateOrgMemberListingInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { updateOrganizationMemberListingHandler } = await import("./members.handler");
+      return updateOrganizationMemberListingHandler({ ctx, input });
+    }),
 
   removeMember: authedProcedure.input(ZRemoveOrgMemberInputSchema).mutation(async ({ ctx, input }) => {
     const { removeOrganizationMemberHandler } = await import("./members.handler");
