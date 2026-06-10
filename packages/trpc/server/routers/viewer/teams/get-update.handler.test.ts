@@ -303,6 +303,7 @@ describe("removeMemberHandler", () => {
       role: MembershipRole.MEMBER,
     } as never);
     vi.mocked(prisma.membership.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
     await removeMemberHandler({ ctx: ownerCtxOrgA, input: { teamId: 10, memberId: 3 } });
 
@@ -355,6 +356,7 @@ describe("removeMemberHandler", () => {
       role: MembershipRole.MEMBER,
     } as never);
     vi.mocked(prisma.membership.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
     await removeMemberHandler({ ctx: ownerCtxOrgA, input: { teamId: 10, memberId: 3 } });
 

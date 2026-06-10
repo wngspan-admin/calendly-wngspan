@@ -10,13 +10,13 @@ import type { TRemoveMemberInputSchema } from "./removeMember.schema";
 
 type RemoveMemberHandlerOptions = {
   ctx: {
-    user: Pick<NonNullable<TrpcSessionUser>, "id">;
+    user: Pick<NonNullable<TrpcSessionUser>, "id" | "organizationId">;
   };
   input: TRemoveMemberInputSchema;
 };
 
 export const removeMemberHandler = async ({ ctx, input }: RemoveMemberHandlerOptions) => {
-  await checkTeamPermission(ctx.user.id, input.teamId, MembershipRole.ADMIN);
+  await checkTeamPermission(ctx.user.id, input.teamId, MembershipRole.ADMIN, ctx.user.organizationId);
 
   const targetMembership = await prisma.membership.findUnique({
     where: { userId_teamId: { userId: input.memberId, teamId: input.teamId } },
