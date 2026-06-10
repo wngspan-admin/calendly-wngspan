@@ -540,7 +540,36 @@ const nextConfig = (phase: string): NextConfig => {
       ].filter(isNotNull);
     },
     async redirects() {
+      const canonicalOrigin = process.env.NEXT_PUBLIC_WEBAPP_URL || "http://localhost:3000";
       const redirects = [
+        ...(isOrganizationsEnabled && !process.env.NEXT_PUBLIC_SINGLE_ORG_SLUG
+          ? [
+              {
+                source: "/",
+                has: [{ type: "host" as const, value: nextJsOrgRewriteConfig.orgHostPath }],
+                destination: `${canonicalOrigin}/${orgSlug}`,
+                permanent: true,
+              },
+              {
+                source: "/:user",
+                has: [{ type: "host" as const, value: nextJsOrgRewriteConfig.orgHostPath }],
+                destination: `${canonicalOrigin}/${orgSlug}/users/:user`,
+                permanent: true,
+              },
+              {
+                source: "/:user/:type",
+                has: [{ type: "host" as const, value: nextJsOrgRewriteConfig.orgHostPath }],
+                destination: `${canonicalOrigin}/${orgSlug}/users/:user/:type`,
+                permanent: true,
+              },
+              {
+                source: "/:user/:type/embed",
+                has: [{ type: "host" as const, value: nextJsOrgRewriteConfig.orgHostPath }],
+                destination: `${canonicalOrigin}/${orgSlug}/users/:user/:type/embed`,
+                permanent: true,
+              },
+            ]
+          : []),
         {
           source: "/settings/organizations",
           destination: "/settings/organizations/profile",

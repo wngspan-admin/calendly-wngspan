@@ -1,12 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
-
 import { useFlagMap } from "@calcom/features/flags/context/provider";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { Button } from "@calcom/ui/components/button";
-
+import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { MailIcon } from "./MailIcon";
 
 type CompanyEmailOrganizationBannerProps = {
@@ -19,9 +17,7 @@ export const CompanyEmailOrganizationBanner = ({ onDismissAction }: CompanyEmail
   const flags = useFlagMap();
 
   const handleLearnMore = () => {
-    const redirectPath = flags["onboarding-v3"]
-      ? "/onboarding/organization/details?migrate=true"
-      : "/settings/organizations/new";
+    const redirectPath = flags["onboarding-v3"] ? "/settings/organizations" : "/settings/organizations/new";
 
     posthog.capture("company_email_banner_upgrade_clicked");
 
