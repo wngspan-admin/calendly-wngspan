@@ -1,16 +1,32 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  createOrganization: vi.fn(),
+  invalidateOrganizationList: vi.fn().mockResolvedValue(undefined),
+  routerPush: vi.fn(),
+}));
 
 vi.mock("@calcom/trpc/react", () => ({
   trpc: {
-    useUtils: () => ({ viewer: { organizations: { list: { invalidate: vi.fn() } } } }),
+    useUtils: () => ({
+      viewer: { organizations: { list: { invalidate: mocks.invalidateOrganizationList } } },
+    }),
     viewer: {
       organizations: {
         list: {
           useQuery: () => ({ data: [], isLoading: false }),
         },
         create: {
-          useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+          useMutation: (options?: {
+            onSuccess?: (organization: { id: number }) => void | Promise<void>;
+          }) => ({
+            mutate: (input: { name: string; slug: string; orgAutoAcceptEmail?: string }) => {
+              mocks.createOrganization(input);
+              void options?.onSuccess?.({ id: 42 });
+            },
+            isPending: false,
+          }),
         },
         update: {
           useMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -21,7 +37,7 @@ vi.mock("@calcom/trpc/react", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mocks.routerPush }),
   usePathname: () => "/settings/organizations",
   useParams: () => ({ id: "1" }),
 }));
@@ -31,7 +47,15 @@ vi.mock("@calcom/lib/hooks/useLocale", () => ({
 }));
 
 vi.mock("@calcom/features/settings/appDir/SettingsHeader", () => ({
-  default: ({ children, title, CTA }: { children: React.ReactNode; title: string; CTA?: React.ReactNode }) => (
+  default: ({
+    children,
+    title,
+    CTA,
+  }: {
+    children: React.ReactNode;
+    title: string;
+    CTA?: React.ReactNode;
+  }) => (
     <div>
       <h1>{title}</h1>
       {CTA}
@@ -44,8 +68,8 @@ vi.mock("@calcom/ui/components/toast", () => ({
   showToast: vi.fn(),
 }));
 
-import OrganizationsListingView from "./organizations-listing-view";
 import OrgNewView from "./org-new-view";
+import OrganizationsListingView from "./organizations-listing-view";
 
 describe("OrganizationsListingView", () => {
   it("renders empty state when no organizations", () => {
@@ -86,6 +110,24 @@ describe("OrgNewView", () => {
     fireEvent.change(screen.getByTestId("org-name-input"), { target: { value: "My Org" } });
     await waitFor(() => {
       expect(screen.getByTestId("create-org-btn")).not.toBeDisabled();
+    });
+  });
+
+  it("creates the organization, refreshes the list, and opens its settings", async () => {
+    render(<OrgNewView />);
+
+    fireEvent.change(screen.getByTestId("org-name-input"), { target: { value: "My Org" } });
+    fireEvent.change(screen.getByTestId("org-domain-input"), { target: { value: "example.com" } });
+    fireEvent.click(screen.getByTestId("create-org-btn"));
+
+    await waitFor(() => {
+      expect(mocks.createOrganization).toHaveBeenCalledWith({
+        name: "My Org",
+        slug: "my-org",
+        orgAutoAcceptEmail: "example.com",
+      });
+      expect(mocks.invalidateOrganizationList).toHaveBeenCalledOnce();
+      expect(mocks.routerPush).toHaveBeenCalledWith("/settings/organizations/42");
     });
   });
 });

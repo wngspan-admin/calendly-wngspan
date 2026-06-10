@@ -19,12 +19,14 @@ function toSlug(name: string): string {
 export default function OrgNewView() {
   const { t } = useLocale();
   const router = useRouter();
+  const utils = trpc.useUtils();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [orgAutoAcceptEmail, setOrgAutoAcceptEmail] = useState("");
 
   const createOrg = trpc.viewer.organizations.create.useMutation({
-    onSuccess: (org) => {
+    onSuccess: async (org) => {
+      await utils.viewer.organizations.list.invalidate();
       showToast(t("organization_created"), "success");
       router.push(`/settings/organizations/${org.id}`);
     },

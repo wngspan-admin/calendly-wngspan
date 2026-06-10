@@ -1,5 +1,11 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  createTeam: vi.fn(),
+  invalidateTeamList: vi.fn().mockResolvedValue(undefined),
+  routerPush: vi.fn(),
+}));
 
 // ---------------------------------------------------------------------------
 // Module-level mocks — must be declared before the imports they replace
@@ -7,17 +13,28 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@calcom/trpc/react", () => ({
   trpc: {
-    useUtils: () => ({ viewer: { teams: { list: { invalidate: vi.fn() } } } }),
+    useUtils: () => ({ viewer: { teams: { list: { invalidate: mocks.invalidateTeamList } } } }),
     viewer: {
       teams: {
         list: {
           useQuery: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
         },
         create: {
-          useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+          useMutation: (options?: { onSuccess?: (team: { id: number }) => void | Promise<void> }) => ({
+            mutate: (input: { name: string; slug: string }) => {
+              mocks.createTeam(input);
+              void options?.onSuccess?.({ id: 42 });
+            },
+            mutateAsync: vi.fn(),
+            isPending: false,
+          }),
         },
         inviteMember: {
-          useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn().mockResolvedValue({}), isPending: false }),
+          useMutation: () => ({
+            mutate: vi.fn(),
+            mutateAsync: vi.fn().mockResolvedValue({}),
+            isPending: false,
+          }),
         },
         update: {
           useMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -40,7 +57,7 @@ vi.mock("@calcom/trpc/react", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mocks.routerPush }),
   usePathname: () => "/settings/teams",
 }));
 
@@ -53,7 +70,15 @@ vi.mock("@calcom/lib/hooks/useLocale", () => ({
 }));
 
 vi.mock("@calcom/features/settings/appDir/SettingsHeader", () => ({
-  default: ({ children, title, CTA }: { children: React.ReactNode; title: string; CTA?: React.ReactNode }) => (
+  default: ({
+    children,
+    title,
+    CTA,
+  }: {
+    children: React.ReactNode;
+    title: string;
+    CTA?: React.ReactNode;
+  }) => (
     <div>
       <h1>{title}</h1>
       {CTA}
@@ -68,8 +93,8 @@ vi.mock("@calcom/ui/components/toast", () => ({
 
 // ---------------------------------------------------------------------------
 
-import TeamsListingView from "./teams-listing-view";
 import TeamNewView from "./team-new-view";
+import TeamsListingView from "./teams-listing-view";
 
 describe("TeamsListingView", () => {
   it("renders empty state when no teams", () => {
@@ -110,6 +135,26 @@ describe("TeamNewView — Step 1", () => {
     fireEvent.change(screen.getByTestId("team-name-input"), { target: { value: "My Team" } });
     await waitFor(() => {
       expect(screen.getByTestId("next-step-btn")).not.toBeDisabled();
+    });
+  });
+
+  it("creates the team when invitations are skipped and opens the new team", async () => {
+    render(<TeamNewView />);
+
+    fireEvent.change(screen.getByTestId("team-name-input"), { target: { value: "My Team" } });
+    fireEvent.click(screen.getByTestId("next-step-btn"));
+    fireEvent.click(screen.getByTestId("skip-invite-btn"));
+
+    await waitFor(() => {
+      expect(mocks.createTeam).toHaveBeenCalledWith({ name: "My Team", slug: "my-team" });
+      expect(mocks.invalidateTeamList).toHaveBeenCalledOnce();
+      expect(screen.getByText("team_created")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "go_to_team" }));
+
+    await waitFor(() => {
+      expect(mocks.routerPush).toHaveBeenCalledWith("/settings/teams/42");
     });
   });
 });

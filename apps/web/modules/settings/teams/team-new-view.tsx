@@ -19,6 +19,7 @@ function toSlug(name: string) {
 export default function TeamNewView() {
   const { t } = useLocale();
   const router = useRouter();
+  const utils = trpc.useUtils();
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -27,7 +28,8 @@ export default function TeamNewView() {
   const [createdTeamId, setCreatedTeamId] = useState<number | null>(null);
 
   const createTeam = trpc.viewer.teams.create.useMutation({
-    onSuccess: (team) => {
+    onSuccess: async (team) => {
+      await utils.viewer.teams.list.invalidate();
       setCreatedTeamId(team.id);
       setStep(3);
     },
@@ -48,6 +50,13 @@ export default function TeamNewView() {
       setInviteEmails((prev) => [...prev, inviteEmail]);
       setInviteEmail("");
     }
+  };
+
+  const handleCreateTeam = ({ skipInvites = false }: { skipInvites?: boolean } = {}) => {
+    if (skipInvites) {
+      setInviteEmails([]);
+    }
+    createTeam.mutate({ name, slug });
   };
 
   const handleFinish = () => {
@@ -122,7 +131,9 @@ export default function TeamNewView() {
             {inviteEmails.length > 0 && (
               <ul className="space-y-1">
                 {inviteEmails.map((e) => (
-                  <li key={e} className="flex items-center justify-between rounded bg-subtle px-3 py-2 text-sm">
+                  <li
+                    key={e}
+                    className="flex items-center justify-between rounded bg-subtle px-3 py-2 text-sm">
                     <span>{e}</span>
                     <button
                       type="button"
@@ -135,13 +146,16 @@ export default function TeamNewView() {
               </ul>
             )}
             <div className="flex gap-2">
-              <Button color="minimal" onClick={() => setStep(3)} data-testid="skip-invite-btn">
+              <Button
+                color="minimal"
+                onClick={() => handleCreateTeam({ skipInvites: true })}
+                loading={createTeam.isPending}
+                disabled={createTeam.isPending}
+                data-testid="skip-invite-btn">
                 {t("skip")}
               </Button>
               <Button
-                onClick={() => {
-                  createTeam.mutate({ name, slug });
-                }}
+                onClick={() => handleCreateTeam()}
                 loading={createTeam.isPending}
                 disabled={createTeam.isPending}
                 data-testid="create-team-btn">
