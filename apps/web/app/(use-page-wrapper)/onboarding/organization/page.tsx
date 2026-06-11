@@ -1,11 +1,13 @@
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import { prisma } from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
+import { buildLegacyRequest } from "@lib/buildLegacyCtx";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import OrganizationOnboardingView from "~/onboarding/organization/organization-onboarding-view";
 
 const Page = async ({ searchParams }: { searchParams: Promise<{ organizationId?: string }> }) => {
-  const session = await getServerSession();
+  const session = await getServerSession({ req: buildLegacyRequest(await headers(), await cookies()) });
   if (!session?.user?.id) redirect("/auth/login");
 
   const organizationId = Number((await searchParams).organizationId);

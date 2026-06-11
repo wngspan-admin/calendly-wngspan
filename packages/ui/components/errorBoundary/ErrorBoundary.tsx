@@ -5,7 +5,11 @@ class ErrorBoundary extends React.Component<
   { children: React.ReactNode; message?: string },
   { error: Error | null; errorInfo: ErrorInfo | null }
 > {
-  constructor(props: { children: React.ReactNode } | Readonly<{ children: React.ReactNode }>) {
+  constructor(
+    props:
+      | { children: React.ReactNode; message?: string }
+      | Readonly<{ children: React.ReactNode; message?: string }>
+  ) {
     super(props);
     this.state = { error: null, errorInfo: null };
   }

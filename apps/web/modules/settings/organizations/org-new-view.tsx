@@ -8,6 +8,8 @@ import { TextField } from "@calcom/ui/components/form";
 import { showToast } from "@calcom/ui/components/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { TRPCClientErrorLike } from "@trpc/client";
+import type { AppRouter } from "@calcom/trpc/server/routers/_app";
 
 function toSlug(name: string): string {
   return name
@@ -22,15 +24,16 @@ export default function OrgNewView() {
   const utils = trpc.useUtils();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
   const [orgAutoAcceptEmail, setOrgAutoAcceptEmail] = useState("");
 
-  const createOrg = trpc.viewer.organizations.create.useMutation({
-    onSuccess: async (org) => {
-      await utils.viewer.organizations.list.invalidate();
+  const createOrg = trpc.viewer.admin.provisionOrganization.useMutation({
+    onSuccess: async () => {
+      await utils.viewer.admin.listOrganizations.invalidate();
       showToast(t("organization_created"), "success");
-      router.push(`/settings/organizations/${org.id}`);
+      router.push("/settings/admin/organizations");
     },
-    onError: (e) => showToast(e.message, "error"),
+    onError: (error: TRPCClientErrorLike<AppRouter>) => showToast(error.message, "error"),
   });
 
   const handleNameChange = (val: string) => {
@@ -56,6 +59,13 @@ export default function OrgNewView() {
           data-testid="org-slug-input"
         />
         <TextField
+          label={t("email")}
+          value={ownerEmail}
+          onChange={(e) => setOwnerEmail(e.target.value)}
+          placeholder="owner@example.com"
+          data-testid="org-owner-email-input"
+        />
+        <TextField
           label={t("org_auto_accept_email_domain")}
           value={orgAutoAcceptEmail}
           onChange={(e) => setOrgAutoAcceptEmail(e.target.value)}
@@ -66,10 +76,15 @@ export default function OrgNewView() {
       <div className="mt-4 flex justify-end">
         <Button
           onClick={() =>
-            createOrg.mutate({ name, slug, orgAutoAcceptEmail: orgAutoAcceptEmail || undefined })
+            createOrg.mutate({
+              name,
+              slug,
+              ownerEmail,
+              bio: undefined,
+            })
           }
           loading={createOrg.isPending}
-          disabled={!name || !slug || createOrg.isPending}
+          disabled={!name || !slug || !ownerEmail || createOrg.isPending}
           data-testid="create-org-btn">
           {t("create_organization")}
         </Button>

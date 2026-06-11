@@ -2479,7 +2479,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     uuid: "npm:8.3.2"
     zod: "npm:3.25.76"
-    zod-prisma-types: "npm:3.2.4"
+    zod-prisma-types: "patch:zod-prisma-types@npm%3A3.2.4#~/.yarn/patches/zod-prisma-types-npm-3.2.4-98242274eb.patch"
   bin:
     prisma-enum-generator: ./run-enum-generator.js
   languageName: unknown
@@ -39290,6 +39290,23 @@ __metadata:
   bin:
     zod-prisma-types: dist/bin.js
   checksum: 10/efee5f138ca36108eba876df49819de9c94a4c7e64aca42f5af0082af1026182e1cc55720bb4512962818f4cd3f30c913d175e88740d8a0af1cc499c03094188
+  languageName: node
+  linkType: hard
+
+"zod-prisma-types@patch:zod-prisma-types@npm%3A3.2.4#~/.yarn/patches/zod-prisma-types-npm-3.2.4-98242274eb.patch":
+  version: 3.2.4
+  resolution: "zod-prisma-types@patch:zod-prisma-types@npm%3A3.2.4#~/.yarn/patches/zod-prisma-types-npm-3.2.4-98242274eb.patch::version=3.2.4&hash=3e0fe8"
+  dependencies:
+    "@prisma/generator-helper": "npm:^6.3.0"
+    code-block-writer: "npm:^12.0.0"
+    lodash: "npm:^4.17.21"
+    zod: "npm:^3.24.1"
+  peerDependencies:
+    "@prisma/client": ^4.x.x || ^5.x.x || ^6.x.x
+    prisma: ^4.x.x || ^5.x.x || ^6.x.x
+  bin:
+    zod-prisma-types: dist/bin.js
+  checksum: 10/dc20665a13d64b63251236332eb6220b7681a1a1627b98c4c3a55f0641e919642c4915a8e1c0b1c0676ddd66f90a82c16603d05b40cf3a020e9dd2c29a7f8411
   languageName: node
   linkType: hard
 

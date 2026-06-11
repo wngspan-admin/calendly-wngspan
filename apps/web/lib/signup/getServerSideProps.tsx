@@ -6,6 +6,7 @@ import { emailSchema } from "@calcom/lib/emailSchema";
 import slugify from "@calcom/lib/slugify";
 import { teamMetadataSchema } from "@calcom/prisma/zod-utils";
 import { IS_GOOGLE_LOGIN_ENABLED } from "@server/lib/constants";
+import { IS_OUTLOOK_LOGIN_ENABLED } from "@calcom/features/auth/lib/outlook";
 import type { GetServerSidePropsContext } from "next";
 import { z } from "zod";
 
@@ -46,6 +47,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const props = {
     redirectUrl,
     isGoogleLoginEnabled: IS_GOOGLE_LOGIN_ENABLED,
+    isOutlookLoginEnabled: IS_OUTLOOK_LOGIN_ENABLED,
 
     prepopulateFormValues: undefined,
     emailVerificationEnabled,
@@ -184,7 +186,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
                   )
                 : slugify(username),
             }
-          : null,
+          : undefined,
       orgSlug,
       orgAutoAcceptEmail: isOrgInviteByLink
         ? (tokenTeam?.organizationSettings?.orgAutoAcceptEmail ??

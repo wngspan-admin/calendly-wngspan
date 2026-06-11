@@ -540,6 +540,7 @@ const nextConfig = (phase: string): NextConfig => {
       ].filter(isNotNull);
     },
     async redirects() {
+      const { orgSlug } = nextJsOrgRewriteConfig;
       const canonicalOrigin = process.env.NEXT_PUBLIC_WEBAPP_URL || "http://localhost:3000";
       const redirects = [
         ...(isOrganizationsEnabled && !process.env.NEXT_PUBLIC_SINGLE_ORG_SLUG

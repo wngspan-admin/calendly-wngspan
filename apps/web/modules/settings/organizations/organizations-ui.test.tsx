@@ -10,23 +10,23 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@calcom/trpc/react", () => ({
   trpc: {
     useUtils: () => ({
-      viewer: { organizations: { list: { invalidate: mocks.invalidateOrganizationList } } },
+      viewer: { admin: { listOrganizations: { invalidate: mocks.invalidateOrganizationList } } },
     }),
     viewer: {
-      organizations: {
-        list: {
-          useQuery: () => ({ data: [], isLoading: false }),
-        },
-        create: {
-          useMutation: (options?: {
-            onSuccess?: (organization: { id: number }) => void | Promise<void>;
-          }) => ({
-            mutate: (input: { name: string; slug: string; orgAutoAcceptEmail?: string }) => {
+      admin: {
+        provisionOrganization: {
+          useMutation: (options?: { onSuccess?: () => void | Promise<void> }) => ({
+            mutate: (input: { name: string; slug: string; ownerEmail: string; bio?: string }) => {
               mocks.createOrganization(input);
-              void options?.onSuccess?.({ id: 42 });
+              void options?.onSuccess?.();
             },
             isPending: false,
           }),
+        },
+      },
+      organizations: {
+        list: {
+          useQuery: () => ({ data: [], isLoading: false }),
         },
         update: {
           useMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -77,9 +77,9 @@ describe("OrganizationsListingView", () => {
     expect(screen.getByText("no_organizations")).toBeInTheDocument();
   });
 
-  it("renders Create Organization button", () => {
+  it("does not render a create organization button", () => {
     render(<OrganizationsListingView />);
-    expect(screen.getByTestId("new-org-btn")).toBeInTheDocument();
+    expect(screen.queryByTestId("new-org-btn")).not.toBeInTheDocument();
   });
 });
 
@@ -108,6 +108,7 @@ describe("OrgNewView", () => {
   it("Create button enabled once name is filled", async () => {
     render(<OrgNewView />);
     fireEvent.change(screen.getByTestId("org-name-input"), { target: { value: "My Org" } });
+    fireEvent.change(screen.getByTestId("org-owner-email-input"), { target: { value: "owner@example.com" } });
     await waitFor(() => {
       expect(screen.getByTestId("create-org-btn")).not.toBeDisabled();
     });
@@ -117,17 +118,18 @@ describe("OrgNewView", () => {
     render(<OrgNewView />);
 
     fireEvent.change(screen.getByTestId("org-name-input"), { target: { value: "My Org" } });
-    fireEvent.change(screen.getByTestId("org-domain-input"), { target: { value: "example.com" } });
+    fireEvent.change(screen.getByTestId("org-owner-email-input"), { target: { value: "owner@example.com" } });
     fireEvent.click(screen.getByTestId("create-org-btn"));
 
     await waitFor(() => {
       expect(mocks.createOrganization).toHaveBeenCalledWith({
         name: "My Org",
         slug: "my-org",
-        orgAutoAcceptEmail: "example.com",
+        ownerEmail: "owner@example.com",
+        bio: undefined,
       });
       expect(mocks.invalidateOrganizationList).toHaveBeenCalledOnce();
-      expect(mocks.routerPush).toHaveBeenCalledWith("/settings/organizations/42");
+      expect(mocks.routerPush).toHaveBeenCalledWith("/settings/admin/organizations");
     });
   });
 });

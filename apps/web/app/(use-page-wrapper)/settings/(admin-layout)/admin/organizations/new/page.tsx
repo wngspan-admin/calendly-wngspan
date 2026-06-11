@@ -1,5 +1,5 @@
 import { requireAdmin } from "@lib/auth/requireAdmin";
-import { ProvisionOrganizationForm } from "~/modules/settings/admin/components/ProvisionOrganizationForm";
+import { ProvisionOrganizationForm } from "~/settings/admin/components/ProvisionOrganizationForm";
 
 export default async function ProvisionOrganizationPage() {
   await requireAdmin();

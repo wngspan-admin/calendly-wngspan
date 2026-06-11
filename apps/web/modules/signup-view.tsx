@@ -207,14 +207,19 @@ export default function Signup({
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
   const [accountUnderReview, setAccountUnderReview] = useState(false);
-  const [displayEmailForm, setDisplayEmailForm] = useState(token);
+  const [displayEmailForm, setDisplayEmailForm] = useState(Boolean(token));
   const [turnstileKey, setTurnstileKey] = useState(0);
   const searchParams = useCompatSearchParams();
   const { t, i18n } = useLocale();
   const router = useRouter();
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: prepopulateFormValues satisfies FormValues,
+    defaultValues: prepopulateFormValues
+      ? {
+          ...prepopulateFormValues,
+          password: "",
+        }
+      : undefined,
     mode: "onTouched",
   });
   const {
@@ -504,8 +509,8 @@ export default function Signup({
                       }}>
                       {/* Username */}
                       {!isOrgInviteByLink ? (
-                        <UsernameField
-                          orgSlug={orgSlug}
+                          <UsernameField
+                          orgSlug={orgSlug ?? undefined}
                           label={t("username")}
                           username={watch("username") || ""}
                           premium={premiumUsername}
@@ -529,7 +534,7 @@ export default function Signup({
                         placeholder="john@doe.com"
                         type="email"
                         autoComplete="email"
-                        disabled={prepopulateFormValues?.email}
+                        disabled={!!prepopulateFormValues?.email}
                         data-testid="signup-emailfield"
                       />
 

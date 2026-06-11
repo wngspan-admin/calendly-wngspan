@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe("BookingPageTagManager", () => {
-  it("GTM App when enabled should have its scripts added with appropriate trackingID and $pushEvent replacement", () => {
+  it("Booking Pages Tag when enabled should render its configured tracking script", () => {
     const GTM_CONFIG = {
       enabled: true,
       trackingId: "GTM-123",
@@ -41,7 +41,7 @@ describe("BookingPageTagManager", () => {
         eventType={{
           metadata: {
             apps: {
-              gtm: GTM_CONFIG,
+              "booking-pages-tag": GTM_CONFIG,
             },
           },
           price: 0,
@@ -49,11 +49,10 @@ describe("BookingPageTagManager", () => {
         }}
       />
     );
-    const scripts = screen.getAllByTestId("cal-analytics-app-gtm");
+    const scripts = screen.getAllByTestId("cal-analytics-app-booking-pages-tag");
     const trackingScript = scripts[0];
-    const pushEventScript = scripts[1];
-    expect(trackingScript.innerHTML).toContain(GTM_CONFIG.trackingId);
-    expect(pushEventScript.innerHTML).toContain("cal_analytics_app__gtm");
+    expect(trackingScript.getAttribute("data-site")).toBe(GTM_CONFIG.trackingId);
+    expect(scripts).toHaveLength(1);
   });
 
   it("GTM App when disabled should not have its scripts added", () => {
@@ -66,7 +65,7 @@ describe("BookingPageTagManager", () => {
         eventType={{
           metadata: {
             apps: {
-              gtm: GTM_CONFIG,
+              "booking-pages-tag": GTM_CONFIG,
             },
           },
           price: 0,
@@ -74,7 +73,7 @@ describe("BookingPageTagManager", () => {
         }}
       />
     );
-    const scripts = screen.queryAllByTestId("cal-analytics-app-gtm");
+    const scripts = screen.queryAllByTestId("cal-analytics-app-booking-pages-tag");
     expect(scripts.length).toBe(0);
   });
 

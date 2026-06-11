@@ -161,6 +161,7 @@ export default function OrganizationOnboardingView({
         {step === 2 && (
           <div className="space-y-4">
             <TextAreaField
+              name="bio"
               label={t("organization_bio")}
               value={bio}
               onChange={(event) => setBio(event.target.value)}
