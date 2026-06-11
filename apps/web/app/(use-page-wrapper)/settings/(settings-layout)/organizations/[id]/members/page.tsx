@@ -27,10 +27,10 @@ function _canManage(actorRole: MembershipRole | undefined, targetRole: Membershi
 
 // biome-ignore lint/complexity/noExcessiveLinesPerFunction: This existing page coordinates related member actions.
 export default function OrganizationMembersPage() {
-  const { t } = useLocale();
   const params = useParams();
   const organizationId = useMemo(() => Number(params?.id ?? ""), [params?.id]);
   const utils = trpc.useUtils();
+  const { t } = useLocale();
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<MembershipRole>(MembershipRole.MEMBER);
@@ -53,8 +53,14 @@ export default function OrganizationMembersPage() {
     { enabled: Number.isFinite(organizationId) && organizationId > 0 }
   );
 
+  const { data: invites } = trpc.viewer.organizations.listInvites.useQuery(
+    { organizationId },
+    { enabled: Number.isFinite(organizationId) && organizationId > 0 }
+  );
+
   const invalidate = async () => {
     await utils.viewer.organizations.getMembers.invalidate({ organizationId });
+    await utils.viewer.organizations.listInvites.invalidate({ organizationId });
   };
 
   const inviteMutation = trpc.viewer.organizations.inviteMember.useMutation({
@@ -84,6 +90,22 @@ export default function OrganizationMembersPage() {
 
   const updateListingMutation = trpc.viewer.organizations.updateMemberListing.useMutation({
     onSuccess: invalidate,
+    onError: (err) => showToast(err.message, "error"),
+  });
+
+  const resendInviteMutation = trpc.viewer.organizations.resendInvite.useMutation({
+    onSuccess: async () => {
+      await invalidate();
+      showToast(t("invitation_resent"), "success");
+    },
+    onError: (err) => showToast(err.message, "error"),
+  });
+
+  const revokeInviteMutation = trpc.viewer.organizations.revokeInvite.useMutation({
+    onSuccess: async () => {
+      await invalidate();
+      showToast(t("invite_revoked_successfully"), "success");
+    },
     onError: (err) => showToast(err.message, "error"),
   });
 
@@ -169,6 +191,50 @@ export default function OrganizationMembersPage() {
           </div>
         </div>
       </div>
+
+      {!!invites?.length && (
+        <div className="rounded-[14px] border border-subtle bg-default p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-medium text-emphasis">{t("pending_invites")}</h2>
+            <span className="text-default text-sm">{invites.length}</span>
+          </div>
+          <ul className="space-y-3">
+            {invites.map((invite) => (
+              <li
+                key={invite.id}
+                className="flex flex-col gap-3 rounded-[12px] border border-subtle bg-subtle p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-medium text-emphasis">{invite.identifier}</p>
+                  <p className="text-default text-sm">
+                    {invite.membershipRole ?? MembershipRole.MEMBER}
+                    {" · "}
+                    expires {new Date(invite.expires).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    loading={
+                      resendInviteMutation.isPending && resendInviteMutation.variables?.inviteId === invite.id
+                    }
+                    onClick={() => resendInviteMutation.mutate({ organizationId, inviteId: invite.id })}>
+                    {t("resend")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    color="destructive"
+                    loading={
+                      revokeInviteMutation.isPending && revokeInviteMutation.variables?.inviteId === invite.id
+                    }
+                    onClick={() => revokeInviteMutation.mutate({ organizationId, inviteId: invite.id })}>
+                    {t("revoke")}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Bulk action toolbar */}
       {selectedCount > 0 && (

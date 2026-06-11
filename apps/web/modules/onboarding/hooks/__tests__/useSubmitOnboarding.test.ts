@@ -152,7 +152,7 @@ describe("useSubmitOnboarding", () => {
     expect(window.location.href).toBe("/event-types?newOrganizationModal=true");
   });
 
-  it("should redirect to getting-started when no migrated teams exist", async () => {
+  it("should redirect to personal settings when no migrated teams exist", async () => {
     const hook = useSubmitOnboarding();
     const { submitOnboarding } = hook;
 
@@ -177,9 +177,9 @@ describe("useSubmitOnboarding", () => {
 
     await submitOnboarding(store, "user@example.com", []);
 
-    // Regular flow: no migrated teams → redirects to getting-started
+    // Regular flow: no migrated teams → redirects to personal settings
     expect(mockShowToast).toHaveBeenCalledWith("Organization created successfully!", "success");
     expect(mockResetOnboarding).toHaveBeenCalled();
-    expect(window.location.href).toBe("/getting-started");
+    expect(window.location.href).toBe("/onboarding/personal/settings");
   });
 });

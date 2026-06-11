@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MembershipRole } from "@calcom/prisma/enums";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PrismaOrganizationRepository } from "./PrismaOrganizationRepository";
 
 function makeMockPrisma() {
@@ -26,7 +26,11 @@ function makeMockPrisma() {
     },
     verificationToken: {
       create: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
+    $transaction: vi.fn(),
   };
 }
 
@@ -79,8 +83,18 @@ describe("PrismaOrganizationRepository", () => {
       const org = {
         id: 5,
         name: "Acme",
-        organizationSettings: { orgAutoAcceptEmail: "acme.com", isOrganizationVerified: true, isOrganizationConfigured: true },
-        members: [{ role: MembershipRole.OWNER, accepted: true, user: { id: 1, name: "Alice", email: "a@acme.com", avatarUrl: null } }],
+        organizationSettings: {
+          orgAutoAcceptEmail: "acme.com",
+          isOrganizationVerified: true,
+          isOrganizationConfigured: true,
+        },
+        members: [
+          {
+            role: MembershipRole.OWNER,
+            accepted: true,
+            user: { id: 1, name: "Alice", email: "a@acme.com", avatarUrl: null },
+          },
+        ],
       };
       mockPrisma.team.findUnique.mockResolvedValue(org);
       const result = await repo.findByIdIncludeMembersAndSettings(5);
@@ -116,7 +130,14 @@ describe("PrismaOrganizationRepository", () => {
 
   describe("create", () => {
     it("creates an org and returns it with settings", async () => {
-      const created = { id: 1, name: "New Org", slug: "new-org", bio: null, isOrganization: true, organizationSettings: null };
+      const created = {
+        id: 1,
+        name: "New Org",
+        slug: "new-org",
+        bio: null,
+        isOrganization: true,
+        organizationSettings: null,
+      };
       mockPrisma.team.create.mockResolvedValue(created);
       const result = await repo.create({
         name: "New Org",
@@ -136,13 +157,18 @@ describe("PrismaOrganizationRepository", () => {
 
   describe("update", () => {
     it("updates the org and returns the updated record", async () => {
-      const updated = { id: 5, name: "Updated", slug: "updated", bio: null, isOrganization: true, organizationSettings: null };
+      const updated = {
+        id: 5,
+        name: "Updated",
+        slug: "updated",
+        bio: null,
+        isOrganization: true,
+        organizationSettings: null,
+      };
       mockPrisma.team.update.mockResolvedValue(updated);
       const result = await repo.update(5, { name: "Updated" });
       expect(result.name).toBe("Updated");
-      expect(mockPrisma.team.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 5 } })
-      );
+      expect(mockPrisma.team.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 5 } }));
     });
   });
 
@@ -166,7 +192,13 @@ describe("PrismaOrganizationRepository", () => {
 
   describe("findMembersByOrg", () => {
     it("returns all memberships for the org ordered correctly", async () => {
-      const members = [{ role: MembershipRole.OWNER, accepted: true, user: { id: 1, email: "a@b.com", name: "A", username: "a", avatarUrl: null } }];
+      const members = [
+        {
+          role: MembershipRole.OWNER,
+          accepted: true,
+          user: { id: 1, email: "a@b.com", name: "A", username: "a", avatarUrl: null },
+        },
+      ];
       mockPrisma.membership.findMany.mockResolvedValue(members);
       const result = await repo.findMembersByOrg(5);
       expect(result).toEqual(members);
@@ -192,7 +224,9 @@ describe("PrismaOrganizationRepository", () => {
       mockPrisma.membership.create.mockResolvedValue({});
       await repo.createMembership({ teamId: 5, userId: 10, role: MembershipRole.MEMBER, accepted: false });
       expect(mockPrisma.membership.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { teamId: 5, userId: 10, role: MembershipRole.MEMBER, accepted: false } })
+        expect.objectContaining({
+          data: { teamId: 5, userId: 10, role: MembershipRole.MEMBER, accepted: false },
+        })
       );
     });
   });
@@ -278,6 +312,65 @@ describe("PrismaOrganizationRepository", () => {
           data: expect.objectContaining({ identifier: "new@example.com", token: "abc123", teamId: 5 }),
         })
       );
+    });
+  });
+
+  describe("invite token lifecycle", () => {
+    it("lists invite tokens for an organization", async () => {
+      mockPrisma.verificationToken.findMany.mockResolvedValue([
+        {
+          id: 1,
+          identifier: "pending@example.com",
+          expires: new Date(),
+          createdAt: new Date(),
+          membershipRole: MembershipRole.MEMBER,
+        },
+      ]);
+
+      const result = await repo.findInviteTokensByOrg(5);
+
+      expect(result).toHaveLength(1);
+      expect(mockPrisma.verificationToken.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { teamId: 5 } })
+      );
+    });
+
+    it("replaces an invite token and removes the previous one", async () => {
+      const existing = {
+        id: 1,
+        identifier: "pending@example.com",
+        expires: new Date(),
+        createdAt: new Date(),
+        membershipRole: MembershipRole.MEMBER,
+      };
+      mockPrisma.verificationToken.findFirst.mockResolvedValue(existing);
+      mockPrisma.$transaction.mockImplementation(async (callback) => callback(mockPrisma));
+      mockPrisma.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
+      mockPrisma.verificationToken.create.mockResolvedValue({});
+
+      const result = await repo.replaceInviteToken(1, {
+        identifier: "pending@example.com",
+        token: "new-token",
+        expires: new Date(),
+        teamId: 5,
+        membershipRole: MembershipRole.MEMBER,
+      });
+
+      expect(result).toEqual(existing);
+      expect(mockPrisma.verificationToken.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { teamId: 5, identifier: "pending@example.com" } })
+      );
+    });
+
+    it("revokes invite tokens by id and org", async () => {
+      mockPrisma.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await repo.revokeInviteToken(1, 5);
+
+      expect(result).toBe(true);
+      expect(mockPrisma.verificationToken.deleteMany).toHaveBeenCalledWith({
+        where: { id: 1, teamId: 5 },
+      });
     });
   });
 });

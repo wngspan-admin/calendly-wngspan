@@ -123,7 +123,7 @@ export const PersonalSettingsView = ({
                 <Button
                   color="minimal"
                   className="rounded-[10px]"
-                  onClick={() => router.push("/onboarding/getting-started")}>
+                  onClick={() => router.push("/onboarding/personal/profile")}>
                   {t("back")}
                 </Button>
               )}

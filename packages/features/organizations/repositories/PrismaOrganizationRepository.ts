@@ -40,6 +40,14 @@ type CreateInviteTokenData = {
   membershipRole: MembershipRole;
 };
 
+type InviteTokenSelect = {
+  id: number;
+  identifier: string;
+  expires: Date;
+  createdAt: Date;
+  membershipRole: MembershipRole | null;
+};
+
 const orgWithSettingsSelect = {
   id: true,
   name: true,
@@ -308,7 +316,68 @@ export class PrismaOrganizationRepository {
 
   // ── Invite token ─────────────────────────────────────────────────────────────
 
+  findInviteTokensByOrg(orgId: number) {
+    return this.prismaClient.verificationToken.findMany({
+      where: { teamId: orgId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        identifier: true,
+        expires: true,
+        createdAt: true,
+        membershipRole: true,
+      },
+    });
+  }
+
+  findInviteTokenById(id: number, orgId: number) {
+    return this.prismaClient.verificationToken.findFirst({
+      where: { id, teamId: orgId },
+      select: {
+        id: true,
+        identifier: true,
+        expires: true,
+        createdAt: true,
+        membershipRole: true,
+      },
+    });
+  }
+
   async createInviteToken(data: CreateInviteTokenData) {
     await this.prismaClient.verificationToken.create({ data });
+  }
+
+  async replaceInviteToken(id: number, data: CreateInviteTokenData): Promise<InviteTokenSelect | null> {
+    const existing = await this.prismaClient.verificationToken.findFirst({
+      where: { id, teamId: data.teamId },
+      select: {
+        id: true,
+        identifier: true,
+        expires: true,
+        createdAt: true,
+        membershipRole: true,
+      },
+    });
+
+    if (!existing) {
+      return null;
+    }
+
+    await this.prismaClient.$transaction(async (tx) => {
+      await tx.verificationToken.deleteMany({
+        where: { teamId: data.teamId, identifier: data.identifier },
+      });
+      await tx.verificationToken.create({ data });
+    });
+
+    return existing;
+  }
+
+  async revokeInviteToken(id: number, orgId: number) {
+    const { count } = await this.prismaClient.verificationToken.deleteMany({
+      where: { id, teamId: orgId },
+    });
+
+    return count > 0;
   }
 }

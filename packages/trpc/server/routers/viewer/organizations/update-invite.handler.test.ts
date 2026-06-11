@@ -19,6 +19,9 @@ vi.mock("@calcom/prisma", () => {
     },
     verificationToken: {
       create: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      deleteMany: vi.fn(),
     },
     $transaction: vi.fn(),
   };
@@ -40,7 +43,12 @@ vi.mock("@calcom/lib/constants", () => ({
 
 import prisma from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
-import { inviteOrganizationMemberHandler } from "./members.handler";
+import {
+  inviteOrganizationMemberHandler,
+  listOrganizationInvitesHandler,
+  resendOrganizationInviteHandler,
+  revokeOrganizationInviteHandler,
+} from "./members.handler";
 import { updateOrganizationHandler } from "./update.handler";
 
 const ownerCtx = { user: { id: 1, name: "Owner", email: "owner@test.com" } };
@@ -212,5 +220,79 @@ describe("inviteOrganizationMemberHandler", () => {
         input: { organizationId: 5, email: "new@test.com", role: MembershipRole.MEMBER },
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});
+
+describe("organization invite lifecycle", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("lists pending invite tokens", async () => {
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.ADMIN,
+      accepted: true,
+    } as never);
+    vi.mocked(prisma.verificationToken.findMany).mockResolvedValue([
+      {
+        id: 1,
+        identifier: "pending@test.com",
+        expires: new Date("2026-06-20T00:00:00.000Z"),
+        createdAt: new Date("2026-06-10T00:00:00.000Z"),
+        membershipRole: MembershipRole.MEMBER,
+      },
+    ] as never);
+
+    const result = await listOrganizationInvitesHandler({
+      ctx: adminCtx,
+      input: { organizationId: 5 },
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ identifier: "pending@test.com" });
+  });
+
+  it("resends an invite with a new token", async () => {
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.ADMIN,
+      accepted: true,
+    } as never);
+    vi.mocked(prisma.verificationToken.findFirst).mockResolvedValue({
+      id: 1,
+      identifier: "pending@test.com",
+      expires: new Date("2026-06-20T00:00:00.000Z"),
+      createdAt: new Date("2026-06-10T00:00:00.000Z"),
+      membershipRole: MembershipRole.MEMBER,
+    } as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.verificationToken.deleteMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.verificationToken.create).mockResolvedValue({} as never);
+
+    const result = await resendOrganizationInviteHandler({
+      ctx: adminCtx,
+      input: { organizationId: 5, inviteId: 1 },
+    });
+
+    expect(result).toEqual({ status: "resent", email: "pending@test.com" });
+    expect(prisma.verificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { teamId: 5, identifier: "pending@test.com" },
+    });
+    expect(prisma.verificationToken.create).toHaveBeenCalledOnce();
+  });
+
+  it("revokes an invite token", async () => {
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.ADMIN,
+      accepted: true,
+    } as never);
+    vi.mocked(prisma.verificationToken.deleteMany).mockResolvedValue({ count: 1 } as never);
+
+    const result = await revokeOrganizationInviteHandler({
+      ctx: adminCtx,
+      input: { organizationId: 5, inviteId: 1 },
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(prisma.verificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { id: 1, teamId: 5 },
+    });
   });
 });

@@ -1,4 +1,3 @@
-import process from "node:process";
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import { getOrgUsernameFromEmail } from "@calcom/features/auth/signup/utils/getOrgUsernameFromEmail";
 import { FeaturesRepository } from "@calcom/features/flags/features.repository";
@@ -12,21 +11,12 @@ import { z } from "zod";
 
 const checkValidEmail = (email: string) => emailSchema.safeParse(email).success;
 
-const querySchema = z.object({
-  username: z
-    .string()
-    .optional()
-    .transform((val) => val || ""),
-  email: emailSchema.optional(),
-});
-
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const prisma = await import("@calcom/prisma").then((mod) => mod.default);
   const featuresRepository = new FeaturesRepository(prisma);
   const emailVerificationEnabled =
     await featuresRepository.checkIfFeatureIsEnabledGlobally("email-verification");
   const signupDisabled = await featuresRepository.checkIfFeatureIsEnabledGlobally("disable-signup");
-  const onboardingV3Enabled = await featuresRepository.checkIfFeatureIsEnabledGlobally("onboarding-v3");
 
   const token = z.string().optional().parse(ctx.query.token);
   const redirectUrlData = z
@@ -59,14 +49,13 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
     prepopulateFormValues: undefined,
     emailVerificationEnabled,
-    onboardingV3Enabled,
   };
 
   if (!token || process.env.NEXT_PUBLIC_DISABLE_SIGNUP === "true" || signupDisabled) {
     return {
       redirect: {
         permanent: false,
-        destination: `/auth/error?error=Signup is disabled in this instance`,
+        destination: `/auth/login?register=false`,
       },
     } as const;
   }
@@ -75,7 +64,9 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     where: {
       token,
     },
-    include: {
+    select: {
+      identifier: true,
+      expires: true,
       team: {
         select: {
           metadata: true,

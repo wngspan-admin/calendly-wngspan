@@ -14,8 +14,11 @@ import type {
   TChangeOrgMemberRoleInputSchema,
   TGetOrgMembersInputSchema,
   TInviteOrgMemberInputSchema,
+  TListOrgInvitesInputSchema,
   TRemoveOrgMemberInputSchema,
   TUpdateOrgMemberListingInputSchema,
+  TResendOrgInviteInputSchema,
+  TRevokeOrgInviteInputSchema,
 } from "./members.schema";
 
 type Ctx = {
@@ -112,6 +115,86 @@ export const inviteOrganizationMemberHandler = async ({
   });
 
   return { status: "invited", email: input.email };
+};
+
+export const listOrganizationInvitesHandler = async ({
+  ctx,
+  input,
+}: {
+  ctx: Ctx;
+  input: TListOrgInvitesInputSchema;
+}) => {
+  const repo = getOrganizationRepository();
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+  return repo.findInviteTokensByOrg(input.organizationId);
+};
+
+export const resendOrganizationInviteHandler = async ({
+  ctx,
+  input,
+}: {
+  ctx: Ctx & { user: Pick<NonNullable<TrpcSessionUser>, "id" | "name" | "email"> };
+  input: TResendOrgInviteInputSchema;
+}) => {
+  const repo = getOrganizationRepository();
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+
+  const invite = await repo.findInviteTokenById(input.inviteId, input.organizationId);
+  if (!invite) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
+  }
+
+  const org = await repo.findById(input.organizationId);
+  const invitee = await repo.findUserByEmail(invite.identifier);
+  const t = await getTranslation(invitee?.locale ?? "en", "common");
+  const token = randomUUID();
+
+  const replaced = await repo.replaceInviteToken(input.inviteId, {
+    identifier: invite.identifier,
+    token,
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    teamId: input.organizationId,
+    membershipRole: invite.membershipRole ?? MembershipRole.MEMBER,
+  });
+
+  if (!replaced) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
+  }
+
+  await sendTeamInviteEmail({
+    language: t,
+    from: ctx.user.name ?? ctx.user.email,
+    to: invite.identifier,
+    teamName: org.name,
+    joinLink: `${WEBAPP_URL}/auth/signup?token=${token}&email=${encodeURIComponent(invite.identifier)}`,
+    isCalcomMember: false,
+    isAutoJoin: false,
+    isOrg: true,
+    parentTeamName: undefined,
+    isExistingUserMovedToOrg: false,
+    prevLink: null,
+    newLink: null,
+  });
+
+  return { status: "resent", email: invite.identifier };
+};
+
+export const revokeOrganizationInviteHandler = async ({
+  ctx,
+  input,
+}: {
+  ctx: Ctx;
+  input: TRevokeOrgInviteInputSchema;
+}) => {
+  const repo = getOrganizationRepository();
+  await assertOrgMembership(repo, ctx.user.id, input.organizationId, MembershipRole.ADMIN);
+
+  const deleted = await repo.revokeInviteToken(input.inviteId, input.organizationId);
+  if (!deleted) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
+  }
+
+  return { success: true };
 };
 
 export const getOrganizationMembersHandler = async ({

@@ -168,8 +168,7 @@ export default function Login({
   };
 
   const showSocialLogin = isGoogleLoginEnabled || isOutlookLoginEnabled;
-  const showSignupLink =
-    process.env.NEXT_PUBLIC_DISABLE_SIGNUP !== "true" && searchParams?.get("register") !== "false";
+  const showSignupLink = false;
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-default/80 px-4 py-10">

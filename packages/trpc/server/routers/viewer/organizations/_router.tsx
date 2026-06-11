@@ -8,8 +8,11 @@ import {
   ZChangeOrgMemberRoleInputSchema,
   ZGetOrgMembersInputSchema,
   ZInviteOrgMemberInputSchema,
+  ZListOrgInvitesInputSchema,
   ZRemoveOrgMemberInputSchema,
   ZUpdateOrgMemberListingInputSchema,
+  ZResendOrgInviteInputSchema,
+  ZRevokeOrgInviteInputSchema,
 } from "./members.schema";
 import {
   ZCompleteOrganizationOnboardingSchema,
@@ -55,6 +58,21 @@ export const organizationsRouter = router({
   inviteMember: authedProcedure.input(ZInviteOrgMemberInputSchema).mutation(async ({ ctx, input }) => {
     const { inviteOrganizationMemberHandler } = await import("./members.handler");
     return inviteOrganizationMemberHandler({ ctx, input });
+  }),
+
+  listInvites: authedProcedure.input(ZListOrgInvitesInputSchema).query(async ({ ctx, input }) => {
+    const { listOrganizationInvitesHandler } = await import("./members.handler");
+    return listOrganizationInvitesHandler({ ctx, input });
+  }),
+
+  resendInvite: authedProcedure.input(ZResendOrgInviteInputSchema).mutation(async ({ ctx, input }) => {
+    const { resendOrganizationInviteHandler } = await import("./members.handler");
+    return resendOrganizationInviteHandler({ ctx, input });
+  }),
+
+  revokeInvite: authedProcedure.input(ZRevokeOrgInviteInputSchema).mutation(async ({ ctx, input }) => {
+    const { revokeOrganizationInviteHandler } = await import("./members.handler");
+    return revokeOrganizationInviteHandler({ ctx, input });
   }),
 
   getMembers: authedProcedure.input(ZGetOrgMembersInputSchema).query(async ({ ctx, input }) => {

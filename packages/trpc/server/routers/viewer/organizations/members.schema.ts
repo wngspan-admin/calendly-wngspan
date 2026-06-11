@@ -14,6 +14,23 @@ export const ZInviteOrgMemberInputSchema = z.object({
 });
 
 // biome-ignore lint/nursery/useExplicitType: zod schema inference is intentional here.
+export const ZListOrgInvitesInputSchema = z.object({
+  organizationId: z.number(),
+});
+
+// biome-ignore lint/nursery/useExplicitType: zod schema inference is intentional here.
+export const ZResendOrgInviteInputSchema = z.object({
+  organizationId: z.number(),
+  inviteId: z.number(),
+});
+
+// biome-ignore lint/nursery/useExplicitType: zod schema inference is intentional here.
+export const ZRevokeOrgInviteInputSchema = z.object({
+  organizationId: z.number(),
+  inviteId: z.number(),
+});
+
+// biome-ignore lint/nursery/useExplicitType: zod schema inference is intentional here.
 export const ZRemoveOrgMemberInputSchema = z.object({
   organizationId: z.number(),
   memberId: z.number(),
@@ -47,6 +64,9 @@ export const ZUpdateOrgMemberListingInputSchema = z.object({
 
 export type TGetOrgMembersInputSchema = z.infer<typeof ZGetOrgMembersInputSchema>;
 export type TInviteOrgMemberInputSchema = z.infer<typeof ZInviteOrgMemberInputSchema>;
+export type TListOrgInvitesInputSchema = z.infer<typeof ZListOrgInvitesInputSchema>;
+export type TResendOrgInviteInputSchema = z.infer<typeof ZResendOrgInviteInputSchema>;
+export type TRevokeOrgInviteInputSchema = z.infer<typeof ZRevokeOrgInviteInputSchema>;
 export type TRemoveOrgMemberInputSchema = z.infer<typeof ZRemoveOrgMemberInputSchema>;
 export type TChangeOrgMemberRoleInputSchema = z.infer<typeof ZChangeOrgMemberRoleInputSchema>;
 export type TBulkRemoveOrgMembersInputSchema = z.infer<typeof ZBulkRemoveOrgMembersInputSchema>;

@@ -200,7 +200,6 @@ export default function Signup({
   orgAutoAcceptEmail,
   redirectUrl,
   emailVerificationEnabled,
-  onboardingV3Enabled,
 }: SignupProps) {
   const isOrgInviteByLink = orgSlug && !prepopulateFormValues?.username;
   const [premiumUsername, setPremiumUsername] = useState(false);
@@ -293,8 +292,9 @@ export default function Signup({
         pushGTMEvent("create_account", { email: data.email, user: data.username, lang: data.language });
       }
 
-      const gettingStartedPath = onboardingV3Enabled ? "onboarding/getting-started" : "getting-started";
-      const verifyOrGettingStarted = emailVerificationEnabled ? "auth/verify-email" : gettingStartedPath;
+      const verifyOrGettingStarted = emailVerificationEnabled
+        ? "auth/verify-email"
+        : "onboarding/personal/settings";
       const constructCallBackIfUrlPresent = () => {
         if (isOrgInviteByLink) {
           return `${WEBAPP_URL}/${searchParams.get("callbackUrl")}`;
