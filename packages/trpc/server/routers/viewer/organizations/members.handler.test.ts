@@ -10,19 +10,22 @@ vi.mock("@calcom/prisma", () => {
       update: vi.fn(),
       updateMany: vi.fn(),
     },
+    profile: {
+      updateMany: vi.fn(),
+    },
   };
   return { default: mockPrisma, prisma: mockPrisma };
 });
 
 import prisma from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
-import { TRPCError } from "@trpc/server";
 import {
   bulkChangeOrganizationMemberRoleHandler,
   bulkRemoveOrganizationMembersHandler,
   changeOrganizationMemberRoleHandler,
   getOrganizationMembersHandler,
   removeOrganizationMemberHandler,
+  updateOrganizationMemberListingHandler,
 } from "./members.handler";
 
 const ownerCtx = { user: { id: 1 } };
@@ -33,9 +36,12 @@ const outsiderCtx = { user: { id: 99 } };
 function mockActorMembership(role: MembershipRole | null) {
   vi.mocked(prisma.membership.findUnique).mockImplementation(({ where }) => {
     const uid = (where as { userId_teamId: { userId: number } }).userId_teamId.userId;
-    if (uid === ownerCtx.user.id) return Promise.resolve({ role: MembershipRole.OWNER, accepted: true } as never);
-    if (uid === adminCtx.user.id) return Promise.resolve({ role: MembershipRole.ADMIN, accepted: true } as never);
-    if (uid === memberCtx.user.id) return Promise.resolve({ role: MembershipRole.MEMBER, accepted: true } as never);
+    if (uid === ownerCtx.user.id)
+      return Promise.resolve({ role: MembershipRole.OWNER, accepted: true } as never);
+    if (uid === adminCtx.user.id)
+      return Promise.resolve({ role: MembershipRole.ADMIN, accepted: true } as never);
+    if (uid === memberCtx.user.id)
+      return Promise.resolve({ role: MembershipRole.MEMBER, accepted: true } as never);
     if (role) return Promise.resolve({ role, accepted: true } as never);
     return Promise.resolve(null);
   });
@@ -47,7 +53,11 @@ describe("getOrganizationMembersHandler", () => {
   it("returns members when caller is a member", async () => {
     mockActorMembership(MembershipRole.MEMBER);
     vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      { role: MembershipRole.MEMBER, accepted: true, user: { id: 10, email: "a@test.com", name: "A", username: "a", avatarUrl: null } },
+      {
+        role: MembershipRole.MEMBER,
+        accepted: true,
+        user: { id: 10, email: "a@test.com", name: "A", username: "a", avatarUrl: null },
+      },
     ] as never);
 
     const result = await getOrganizationMembersHandler({ ctx: memberCtx, input: { organizationId: 5 } });
@@ -63,7 +73,10 @@ describe("getOrganizationMembersHandler", () => {
   });
 
   it("throws FORBIDDEN when membership is not accepted", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.MEMBER, accepted: false } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.MEMBER,
+      accepted: false,
+    } as never);
 
     await expect(
       getOrganizationMembersHandler({ ctx: memberCtx, input: { organizationId: 5 } })
@@ -96,7 +109,10 @@ describe("removeOrganizationMemberHandler", () => {
   });
 
   it("throws FORBIDDEN when MEMBER tries to remove anyone", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.MEMBER, accepted: true } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.MEMBER,
+      accepted: true,
+    } as never);
 
     await expect(
       removeOrganizationMemberHandler({ ctx: memberCtx, input: { organizationId: 5, memberId: 10 } })
@@ -111,6 +127,42 @@ describe("removeOrganizationMemberHandler", () => {
     await expect(
       removeOrganizationMemberHandler({ ctx: adminCtx, input: { organizationId: 5, memberId: 99 } })
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
+
+describe("updateOrganizationMemberListingHandler", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("allows an admin to publish an accepted member profile", async () => {
+    vi.mocked(prisma.membership.findUnique)
+      .mockResolvedValueOnce({ role: MembershipRole.ADMIN, accepted: true } as never)
+      .mockResolvedValueOnce({ role: MembershipRole.MEMBER, accepted: true } as never);
+    vi.mocked(prisma.profile.updateMany).mockResolvedValue({ count: 1 } as never);
+
+    const result = await updateOrganizationMemberListingHandler({
+      ctx: adminCtx,
+      input: { organizationId: 5, memberId: 10, isListed: true },
+    });
+
+    expect(result).toEqual({ isListed: true });
+    expect(prisma.profile.updateMany).toHaveBeenCalledWith({
+      where: { userId: 10, organizationId: 5 },
+      data: { isListed: true },
+    });
+  });
+
+  it("rejects listing changes from ordinary members", async () => {
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.MEMBER,
+      accepted: true,
+    } as never);
+
+    await expect(
+      updateOrganizationMemberListingHandler({
+        ctx: memberCtx,
+        input: { organizationId: 5, memberId: 10, isListed: true },
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
 
@@ -134,7 +186,10 @@ describe("changeOrganizationMemberRoleHandler", () => {
   });
 
   it("throws FORBIDDEN when ADMIN tries to change roles", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.ADMIN, accepted: true } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.ADMIN,
+      accepted: true,
+    } as never);
 
     await expect(
       changeOrganizationMemberRoleHandler({
@@ -162,7 +217,10 @@ describe("bulkRemoveOrganizationMembersHandler", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("removes multiple members when actor is ADMIN and all targets are MEMBERs", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.ADMIN, accepted: true } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.ADMIN,
+      accepted: true,
+    } as never);
     vi.mocked(prisma.membership.findMany).mockResolvedValue([
       { userId: 10, role: MembershipRole.MEMBER },
       { userId: 11, role: MembershipRole.MEMBER },
@@ -181,7 +239,10 @@ describe("bulkRemoveOrganizationMembersHandler", () => {
   });
 
   it("throws FORBIDDEN when ADMIN tries to bulk-remove another ADMIN", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.ADMIN, accepted: true } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.ADMIN,
+      accepted: true,
+    } as never);
     vi.mocked(prisma.membership.findMany).mockResolvedValue([
       { userId: 20, role: MembershipRole.ADMIN },
     ] as never);
@@ -208,7 +269,10 @@ describe("bulkRemoveOrganizationMembersHandler", () => {
   });
 
   it("allows OWNER to bulk-remove ADMINs", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.OWNER, accepted: true } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.OWNER,
+      accepted: true,
+    } as never);
     vi.mocked(prisma.membership.findMany).mockResolvedValue([
       { userId: 20, role: MembershipRole.ADMIN },
     ] as never);
@@ -227,11 +291,11 @@ describe("bulkChangeOrganizationMemberRoleHandler", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("updates role for all target members when actor is OWNER", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.OWNER, accepted: true } as never);
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      { userId: 10 },
-      { userId: 11 },
-    ] as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.OWNER,
+      accepted: true,
+    } as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([{ userId: 10 }, { userId: 11 }] as never);
     vi.mocked(prisma.membership.updateMany).mockResolvedValue({ count: 2 } as never);
 
     const result = await bulkChangeOrganizationMemberRoleHandler({
@@ -246,7 +310,10 @@ describe("bulkChangeOrganizationMemberRoleHandler", () => {
   });
 
   it("throws FORBIDDEN when ADMIN tries to bulk change roles", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.ADMIN, accepted: true } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.ADMIN,
+      accepted: true,
+    } as never);
 
     await expect(
       bulkChangeOrganizationMemberRoleHandler({
@@ -257,7 +324,10 @@ describe("bulkChangeOrganizationMemberRoleHandler", () => {
   });
 
   it("throws NOT_FOUND when none of the memberIds exist", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: MembershipRole.OWNER, accepted: true } as never);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: MembershipRole.OWNER,
+      accepted: true,
+    } as never);
     vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
 
     await expect(

@@ -1,26 +1,18 @@
-import { getFeatureRepository } from "@calcom/features/di/containers/FeatureRepository";
+export async function getGettingStartedPath(): Promise<string> {
+  return "/onboarding/personal/settings";
+}
 
-export class OnboardingPathService {
-  static async getGettingStartedPath(): Promise<string> {
-    const featureRepository = getFeatureRepository();
-    const onboardingV3Enabled = await featureRepository.checkIfFeatureIsEnabledGlobally("onboarding-v3");
-    return onboardingV3Enabled ? "/onboarding/getting-started" : "/getting-started";
+export async function getGettingStartedPathWhenInvited(): Promise<string> {
+  return "/onboarding/personal/settings";
+}
+
+export async function getGettingStartedPathWithParams(queryParams?: Record<string, string>): Promise<string> {
+  const basePath = await getGettingStartedPath();
+
+  if (!queryParams || Object.keys(queryParams).length === 0) {
+    return basePath;
   }
 
-  static async getGettingStartedPathWhenInvited(): Promise<string> {
-    const featureRepository = getFeatureRepository();
-    const onboardingV3Enabled = await featureRepository.checkIfFeatureIsEnabledGlobally("onboarding-v3");
-    return onboardingV3Enabled ? "/onboarding/personal/settings" : "/getting-started";
-  }
-
-  static async getGettingStartedPathWithParams(queryParams?: Record<string, string>): Promise<string> {
-    const basePath = await OnboardingPathService.getGettingStartedPath();
-
-    if (!queryParams || Object.keys(queryParams).length === 0) {
-      return basePath;
-    }
-
-    const params = new URLSearchParams(queryParams);
-    return `${basePath}?${params.toString()}`;
-  }
+  const params = new URLSearchParams(queryParams);
+  return `${basePath}?${params.toString()}`;
 }

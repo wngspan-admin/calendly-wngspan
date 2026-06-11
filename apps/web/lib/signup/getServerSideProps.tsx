@@ -1,4 +1,3 @@
-import process from "node:process";
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import { getOrgUsernameFromEmail } from "@calcom/features/auth/signup/utils/getOrgUsernameFromEmail";
 import { FeaturesRepository } from "@calcom/features/flags/features.repository";
@@ -12,21 +11,12 @@ import { z } from "zod";
 
 const checkValidEmail = (email: string) => emailSchema.safeParse(email).success;
 
-const querySchema = z.object({
-  username: z
-    .string()
-    .optional()
-    .transform((val) => val || ""),
-  email: emailSchema.optional(),
-});
-
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const prisma = await import("@calcom/prisma").then((mod) => mod.default);
   const featuresRepository = new FeaturesRepository(prisma);
   const emailVerificationEnabled =
     await featuresRepository.checkIfFeatureIsEnabledGlobally("email-verification");
   const signupDisabled = await featuresRepository.checkIfFeatureIsEnabledGlobally("disable-signup");
-  const onboardingV3Enabled = await featuresRepository.checkIfFeatureIsEnabledGlobally("onboarding-v3");
 
   const token = z.string().optional().parse(ctx.query.token);
   const redirectUrlData = z
@@ -59,40 +49,24 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
     prepopulateFormValues: undefined,
     emailVerificationEnabled,
-    onboardingV3Enabled,
   };
 
-  if ((process.env.NEXT_PUBLIC_DISABLE_SIGNUP === "true" && !token) || signupDisabled) {
+  if (!token || process.env.NEXT_PUBLIC_DISABLE_SIGNUP === "true" || signupDisabled) {
     return {
       redirect: {
         permanent: false,
-        destination: `/auth/error?error=Signup is disabled in this instance`,
+        destination: `/auth/login?register=false`,
       },
     } as const;
-  }
-
-  // no token given, treat as a normal signup without verification token
-  if (!token) {
-    // username + email prepopulated from query params
-    const queryData = querySchema.safeParse(ctx.query);
-    return {
-      props: JSON.parse(
-        JSON.stringify({
-          ...props,
-          prepopulateFormValues: {
-            username: queryData.success ? queryData.data.username : null,
-            email: queryData.success ? queryData.data.email : null,
-          },
-        })
-      ),
-    };
   }
 
   const verificationToken = await prisma.verificationToken.findUnique({
     where: {
       token,
     },
-    include: {
+    select: {
+      identifier: true,
+      expires: true,
       team: {
         select: {
           metadata: true,

@@ -1,4 +1,4 @@
-import OrgNewView from "~/settings/organizations/org-new-view";
+import { redirect } from "next/navigation";
 
-const Page = () => <OrgNewView />;
+const Page = () => redirect("/settings/organizations");
 export default Page;

@@ -1,6 +1,6 @@
 import authedProcedure from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
-import { ZCreateOrgInputSchema } from "./create.schema";
+import { ZAcceptOrganizationInviteSchema } from "./acceptInvite.schema";
 import { ZGetOrgInputSchema } from "./get.schema";
 import {
   ZBulkChangeOrgMemberRoleInputSchema,
@@ -8,14 +8,22 @@ import {
   ZChangeOrgMemberRoleInputSchema,
   ZGetOrgMembersInputSchema,
   ZInviteOrgMemberInputSchema,
+  ZListOrgInvitesInputSchema,
   ZRemoveOrgMemberInputSchema,
+  ZUpdateOrgMemberListingInputSchema,
+  ZResendOrgInviteInputSchema,
+  ZRevokeOrgInviteInputSchema,
 } from "./members.schema";
+import {
+  ZCompleteOrganizationOnboardingSchema,
+  ZUpdateOrganizationProfileSlugSchema,
+} from "./onboarding.schema";
 import { ZUpdateOrgInputSchema } from "./update.schema";
 
 export const organizationsRouter = router({
-  create: authedProcedure.input(ZCreateOrgInputSchema).mutation(async ({ ctx, input }) => {
-    const { createOrganizationHandler } = await import("./create.handler");
-    return createOrganizationHandler({ ctx, input });
+  acceptInvite: authedProcedure.input(ZAcceptOrganizationInviteSchema).mutation(async ({ ctx, input }) => {
+    const { acceptOrganizationInviteHandler } = await import("./acceptInvite.handler");
+    return acceptOrganizationInviteHandler({ ctx, input });
   }),
 
   list: authedProcedure.query(async ({ ctx }) => {
@@ -33,15 +41,51 @@ export const organizationsRouter = router({
     return updateOrganizationHandler({ ctx, input });
   }),
 
+  updateProfileSlug: authedProcedure
+    .input(ZUpdateOrganizationProfileSlugSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { updateOrganizationProfileSlugHandler } = await import("./onboarding.handler");
+      return updateOrganizationProfileSlugHandler({ ctx, input });
+    }),
+
+  completeOnboarding: authedProcedure
+    .input(ZCompleteOrganizationOnboardingSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { completeOrganizationOnboardingHandler } = await import("./onboarding.handler");
+      return completeOrganizationOnboardingHandler({ ctx, input });
+    }),
+
   inviteMember: authedProcedure.input(ZInviteOrgMemberInputSchema).mutation(async ({ ctx, input }) => {
     const { inviteOrganizationMemberHandler } = await import("./members.handler");
     return inviteOrganizationMemberHandler({ ctx, input });
+  }),
+
+  listInvites: authedProcedure.input(ZListOrgInvitesInputSchema).query(async ({ ctx, input }) => {
+    const { listOrganizationInvitesHandler } = await import("./members.handler");
+    return listOrganizationInvitesHandler({ ctx, input });
+  }),
+
+  resendInvite: authedProcedure.input(ZResendOrgInviteInputSchema).mutation(async ({ ctx, input }) => {
+    const { resendOrganizationInviteHandler } = await import("./members.handler");
+    return resendOrganizationInviteHandler({ ctx, input });
+  }),
+
+  revokeInvite: authedProcedure.input(ZRevokeOrgInviteInputSchema).mutation(async ({ ctx, input }) => {
+    const { revokeOrganizationInviteHandler } = await import("./members.handler");
+    return revokeOrganizationInviteHandler({ ctx, input });
   }),
 
   getMembers: authedProcedure.input(ZGetOrgMembersInputSchema).query(async ({ ctx, input }) => {
     const { getOrganizationMembersHandler } = await import("./members.handler");
     return getOrganizationMembersHandler({ ctx, input });
   }),
+
+  updateMemberListing: authedProcedure
+    .input(ZUpdateOrgMemberListingInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { updateOrganizationMemberListingHandler } = await import("./members.handler");
+      return updateOrganizationMemberListingHandler({ ctx, input });
+    }),
 
   removeMember: authedProcedure.input(ZRemoveOrgMemberInputSchema).mutation(async ({ ctx, input }) => {
     const { removeOrganizationMemberHandler } = await import("./members.handler");

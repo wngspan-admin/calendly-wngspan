@@ -49,8 +49,7 @@ function VerifyEmailPage() {
       posthog.capture("verify_email_already_verified", {
         onboarding_v3_enabled: flags["onboarding-v3"],
       });
-      const gettingStartedPath = flags["onboarding-v3"] ? "/onboarding/getting-started" : "/getting-started";
-      router.replace(gettingStartedPath);
+      router.replace("/onboarding/personal/settings");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.isVerified, flags]);
@@ -96,7 +95,7 @@ function VerifyEmailPage() {
                   <Button
                     color="minimal"
                     onClick={() => {
-                      signOut({ callbackUrl: "/signup" });
+                      signOut({ callbackUrl: "/auth/login" });
                     }}>
                     {t("use_different_email")}
                   </Button>

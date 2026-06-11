@@ -1,22 +1,27 @@
+import { assertSameOrg } from "@calcom/lib/teams/assertSameOrg";
 import prisma from "@calcom/prisma";
 import { TRPCError } from "@trpc/server";
-
 import type { TrpcSessionUser } from "../../../types";
 import type { TGetMembersInputSchema } from "./getMembers.schema";
 
 type GetMembersHandlerOptions = {
   ctx: {
-    user: Pick<NonNullable<TrpcSessionUser>, "id">;
+    user: Pick<NonNullable<TrpcSessionUser>, "id" | "organizationId">;
   };
   input: TGetMembersInputSchema;
 };
 
 export const getMembersHandler = async ({ ctx, input }: GetMembersHandlerOptions) => {
-  const isMember = await prisma.membership.findUnique({
+  const membership = await prisma.membership.findUnique({
     where: { userId_teamId: { userId: ctx.user.id, teamId: input.teamId } },
-    select: { accepted: true },
+    select: {
+      accepted: true,
+      team: { select: { parentId: true } },
+    },
   });
-  if (!isMember?.accepted) throw new TRPCError({ code: "UNAUTHORIZED" });
+  if (!membership?.accepted) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+  assertSameOrg(membership.team, ctx.user);
 
   return prisma.membership.findMany({
     where: { teamId: input.teamId },

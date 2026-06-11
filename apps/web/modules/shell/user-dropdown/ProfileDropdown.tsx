@@ -1,4 +1,3 @@
-import { ENABLE_PROFILE_SWITCHER } from "@calcom/lib/constants";
 import { useRefreshData } from "@calcom/lib/hooks/useRefreshData";
 import { trpc } from "@calcom/trpc/react";
 import classNames from "@calcom/ui/classNames";
@@ -21,11 +20,11 @@ export function ProfileDropdown() {
   const [menuOpen, setMenuOpen] = useState(false);
   const refreshData = useRefreshData();
 
-  if (!data || !ENABLE_PROFILE_SWITCHER || !sessionData) {
+  if (!data || !sessionData) {
     return null;
   }
   const options = data.profiles.map((profile) => {
-    let label;
+    let label: string | null | undefined;
     if (profile.organization) {
       label = profile.organization.name;
     } else {

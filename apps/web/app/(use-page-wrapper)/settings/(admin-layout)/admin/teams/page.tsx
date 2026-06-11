@@ -1,6 +1,9 @@
+import { requireAdmin } from "@lib/auth/requireAdmin";
+
 import { AdminTeamsTable } from "@calcom/web/modules/settings/admin/components/AdminTeamsTable";
 
-export default function AdminTeamsPage() {
+export default async function AdminTeamsPage() {
+  await requireAdmin();
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div>

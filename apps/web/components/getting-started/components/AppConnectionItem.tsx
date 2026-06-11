@@ -94,7 +94,7 @@ const AppConnectionItem = (props: IAppConnectionItem) => {
                           <div>
                             <>
                               <Link
-                                href={`${WEBAPP_URL}/getting-started/connected-calendar`}
+                                href={`${WEBAPP_URL}/onboarding/personal/calendar`}
                                 className="flex items-center text-xs underline">
                                 <span className="mr-1">
                                   {t("connect_app", { dependencyName: dependency.name })}

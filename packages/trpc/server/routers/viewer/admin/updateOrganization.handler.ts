@@ -23,19 +23,15 @@ const updateOrganizationHandler = async ({ input }: UpdateOptions) => {
     data.name = input.name;
   }
 
-  if (input.orgAutoAcceptEmail !== undefined || input.isOrganizationVerified !== undefined) {
+  if (input.orgAutoAcceptEmail !== undefined) {
     data.organizationSettings = {
       upsert: {
         create: {
           orgAutoAcceptEmail: input.orgAutoAcceptEmail ?? "",
           isOrganizationConfigured: true as const,
-          isOrganizationVerified: input.isOrganizationVerified ?? false,
         },
         update: {
-          ...(input.orgAutoAcceptEmail !== undefined && { orgAutoAcceptEmail: input.orgAutoAcceptEmail }),
-          ...(input.isOrganizationVerified !== undefined && {
-            isOrganizationVerified: input.isOrganizationVerified,
-          }),
+          orgAutoAcceptEmail: input.orgAutoAcceptEmail,
         },
       },
     };
@@ -52,7 +48,6 @@ const updateOrganizationHandler = async ({ input }: UpdateOptions) => {
       organizationSettings: {
         select: {
           orgAutoAcceptEmail: true,
-          isOrganizationVerified: true,
         },
       },
     },

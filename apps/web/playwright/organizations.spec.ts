@@ -20,11 +20,17 @@ test.describe("Organization settings (authenticated)", () => {
   test("Organizations link appears in settings sidebar", async ({ page }) => {
     await page.goto("/settings");
     await expect(page.getByRole("link", { name: /organizations?/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /create organization/i })).toBeVisible();
   });
 
   test("Organizations page loads with heading", async ({ page }) => {
     await page.goto("/settings/organizations");
     await expect(page.getByRole("heading", { name: /organizations?/i })).toBeVisible();
+  });
+
+  test("Admin Organizations page links to organization creation", async ({ page }) => {
+    await page.goto("/settings/admin/organizations");
+    await expect(page.getByRole("link", { name: /create organization/i })).toBeVisible();
   });
 
   test("Create Organization page loads with name and slug fields", async ({ page }) => {

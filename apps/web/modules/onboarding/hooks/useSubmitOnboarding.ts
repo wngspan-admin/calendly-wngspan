@@ -1,4 +1,3 @@
-import { useFlagMap } from "@calcom/features/flags/context/provider";
 import { CreationSource } from "@calcom/prisma/enums";
 import { trpc } from "@calcom/trpc/react";
 import { showToast } from "@calcom/ui/components/toast";
@@ -8,7 +7,6 @@ import type { OnboardingState } from "../store/onboarding-store";
 export const useSubmitOnboarding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const flags = useFlagMap();
 
   const intentToCreateOrg = {
     mutate: () => {},
@@ -133,7 +131,7 @@ export const useSubmitOnboarding = () => {
 
   const skipToPersonal = (resetOnboarding: () => void) => {
     resetOnboarding();
-    const gettingStartedPath = "/getting-started";
+    const gettingStartedPath = "/onboarding/personal/settings";
     // Use window.location.href for a full page reload to ensure JWT callback runs
     // without trigger="update", which will call autoMergeIdentities() and fetch org data
     window.location.href = gettingStartedPath;

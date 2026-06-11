@@ -1,12 +1,12 @@
+import { assertSameOrg } from "@calcom/lib/teams/assertSameOrg";
 import prisma from "@calcom/prisma";
 import { TRPCError } from "@trpc/server";
-
 import type { TrpcSessionUser } from "../../../types";
 import type { TGetTeamInputSchema } from "./get.schema";
 
 type GetTeamHandlerOptions = {
   ctx: {
-    user: Pick<NonNullable<TrpcSessionUser>, "id">;
+    user: Pick<NonNullable<TrpcSessionUser>, "id" | "organizationId">;
   };
   input: TGetTeamInputSchema;
 };
@@ -14,7 +14,17 @@ type GetTeamHandlerOptions = {
 export const getTeamHandler = async ({ ctx, input }: GetTeamHandlerOptions) => {
   const team = await prisma.team.findUnique({
     where: { id: input.teamId },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      bio: true,
+      logoUrl: true,
+      isPrivate: true,
+      isListed: true,
+      hideBranding: true,
+      isOrganization: true,
+      parentId: true,
       members: {
         where: { accepted: true },
         select: {
@@ -29,6 +39,8 @@ export const getTeamHandler = async ({ ctx, input }: GetTeamHandlerOptions) => {
 
   const isMember = team.members.some((m) => m.user.id === ctx.user.id);
   if (!isMember) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+  assertSameOrg(team, ctx.user);
 
   return team;
 };

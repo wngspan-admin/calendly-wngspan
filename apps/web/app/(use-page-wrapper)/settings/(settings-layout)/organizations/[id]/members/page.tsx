@@ -1,10 +1,11 @@
 "use client";
 
+import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { trpc } from "@calcom/trpc/react";
 import { Avatar } from "@calcom/ui/components/avatar";
 import { Button } from "@calcom/ui/components/button";
-import { Select, TextField } from "@calcom/ui/components/form";
+import { Select, Switch, TextField } from "@calcom/ui/components/form";
 import { showToast } from "@calcom/ui/components/toast";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -24,10 +25,12 @@ function _canManage(actorRole: MembershipRole | undefined, targetRole: Membershi
   return roleOrder.indexOf(actorRole) >= roleOrder.indexOf(targetRole);
 }
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: This existing page coordinates related member actions.
 export default function OrganizationMembersPage() {
   const params = useParams();
   const organizationId = useMemo(() => Number(params?.id ?? ""), [params?.id]);
   const utils = trpc.useUtils();
+  const { t } = useLocale();
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<MembershipRole>(MembershipRole.MEMBER);
@@ -50,8 +53,14 @@ export default function OrganizationMembersPage() {
     { enabled: Number.isFinite(organizationId) && organizationId > 0 }
   );
 
+  const { data: invites } = trpc.viewer.organizations.listInvites.useQuery(
+    { organizationId },
+    { enabled: Number.isFinite(organizationId) && organizationId > 0 }
+  );
+
   const invalidate = async () => {
     await utils.viewer.organizations.getMembers.invalidate({ organizationId });
+    await utils.viewer.organizations.listInvites.invalidate({ organizationId });
   };
 
   const inviteMutation = trpc.viewer.organizations.inviteMember.useMutation({
@@ -75,6 +84,27 @@ export default function OrganizationMembersPage() {
     onSuccess: async () => {
       await invalidate();
       showToast("Role updated", "success");
+    },
+    onError: (err) => showToast(err.message, "error"),
+  });
+
+  const updateListingMutation = trpc.viewer.organizations.updateMemberListing.useMutation({
+    onSuccess: invalidate,
+    onError: (err) => showToast(err.message, "error"),
+  });
+
+  const resendInviteMutation = trpc.viewer.organizations.resendInvite.useMutation({
+    onSuccess: async () => {
+      await invalidate();
+      showToast(t("invitation_resent"), "success");
+    },
+    onError: (err) => showToast(err.message, "error"),
+  });
+
+  const revokeInviteMutation = trpc.viewer.organizations.revokeInvite.useMutation({
+    onSuccess: async () => {
+      await invalidate();
+      showToast(t("invite_revoked_successfully"), "success");
     },
     onError: (err) => showToast(err.message, "error"),
   });
@@ -162,6 +192,50 @@ export default function OrganizationMembersPage() {
         </div>
       </div>
 
+      {!!invites?.length && (
+        <div className="rounded-[14px] border border-subtle bg-default p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-medium text-emphasis">{t("pending_invites")}</h2>
+            <span className="text-default text-sm">{invites.length}</span>
+          </div>
+          <ul className="space-y-3">
+            {invites.map((invite) => (
+              <li
+                key={invite.id}
+                className="flex flex-col gap-3 rounded-[12px] border border-subtle bg-subtle p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-medium text-emphasis">{invite.identifier}</p>
+                  <p className="text-default text-sm">
+                    {invite.membershipRole ?? MembershipRole.MEMBER}
+                    {" · "}
+                    expires {new Date(invite.expires).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    loading={
+                      resendInviteMutation.isPending && resendInviteMutation.variables?.inviteId === invite.id
+                    }
+                    onClick={() => resendInviteMutation.mutate({ organizationId, inviteId: invite.id })}>
+                    {t("resend")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    color="destructive"
+                    loading={
+                      revokeInviteMutation.isPending && revokeInviteMutation.variables?.inviteId === invite.id
+                    }
+                    onClick={() => revokeInviteMutation.mutate({ organizationId, inviteId: invite.id })}>
+                    {t("revoke")}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Bulk action toolbar */}
       {selectedCount > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-subtle bg-subtle p-3">
@@ -243,6 +317,25 @@ export default function OrganizationMembersPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {member.accepted && member.user.profiles[0] && (
+                      <label className="flex items-center gap-2 text-default text-sm">
+                        {t("listed")}
+                        <Switch
+                          checked={member.user.profiles[0].isListed}
+                          disabled={
+                            updateListingMutation.isPending &&
+                            updateListingMutation.variables?.memberId === member.user.id
+                          }
+                          onCheckedChange={(isListed) =>
+                            updateListingMutation.mutate({
+                              organizationId,
+                              memberId: member.user.id,
+                              isListed,
+                            })
+                          }
+                        />
+                      </label>
+                    )}
                     {!member.accepted && (
                       <span className="rounded-full bg-subtle px-2 py-0.5 font-medium text-default text-xs">
                         Pending

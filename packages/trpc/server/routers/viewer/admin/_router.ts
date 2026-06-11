@@ -9,9 +9,11 @@ import { ZListMembersSchema } from "./listPaginated.schema";
 import { ZAdminLockUserAccountSchema } from "./lockUserAccount.schema";
 import { ZAdminRemoveTwoFactor } from "./removeTwoFactor.schema";
 import { ZAdminPasswordResetSchema } from "./sendPasswordReset.schema";
+import { ZAdminProvisionOrganizationSchema } from "./provisionOrganization.schema";
 import { ZSetSMSLockState } from "./setSMSLockState.schema";
 import { toggleFeatureFlag } from "./toggleFeatureFlag.procedure";
 import { ZAdminUnassignFeatureFromTeamSchema } from "./unassignFeatureFromTeam.schema";
+import { ZAdminDeleteOrganizationSchema } from "./deleteOrganization.schema";
 import { ZAdminUpdateOrganizationSchema } from "./updateOrganization.schema";
 import { watchlistRouter } from "./watchlist/_router";
 
@@ -78,15 +80,19 @@ export const adminRouter = router({
     const { default: handler } = await import("./updateOrganization.handler");
     return handler(opts);
   }),
+  provisionOrganization: authedAdminProcedure
+    .input(ZAdminProvisionOrganizationSchema)
+    .mutation(async (opts) => {
+      const { default: handler } = await import("./provisionOrganization.handler");
+      return handler(opts);
+    }),
   deleteTeam: authedAdminProcedure.input(z.object({ teamId: z.number() })).mutation(async (opts) => {
     const { default: handler } = await import("./deleteTeam.handler");
     return handler(opts);
   }),
-  deleteOrganization: authedAdminProcedure
-    .input(z.object({ organizationId: z.number() }))
-    .mutation(async (opts) => {
-      const { default: handler } = await import("./deleteOrganization.handler");
-      return handler(opts);
-    }),
+  deleteOrganization: authedAdminProcedure.input(ZAdminDeleteOrganizationSchema).mutation(async (opts) => {
+    const { default: handler } = await import("./deleteOrganization.handler");
+    return handler(opts);
+  }),
   watchlist: watchlistRouter,
 });

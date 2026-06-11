@@ -7,6 +7,7 @@ import { DEFAULT_DARK_BRAND_COLOR, DEFAULT_LIGHT_BRAND_COLOR } from "@calcom/lib
 import { getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
 import logger from "@calcom/lib/logger";
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
+import { buildMemberPath } from "@calcom/lib/publicRoutes";
 import { safeStringify } from "@calcom/lib/safeStringify";
 import { stripMarkdown } from "@calcom/lib/stripMarkdown";
 import { prisma } from "@calcom/prisma";
@@ -168,7 +169,10 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
   // if profile only has one public event-type, redirect to it
   if (eventTypes.length === 1 && context.query.redirect !== "false") {
     // Redirect but don't change the URL
-    const urlDestination = `/${user.profile.username}/${eventTypes[0].slug}`;
+    const urlDestination =
+      currentOrgDomain && user.profile.username
+        ? buildMemberPath(currentOrgDomain, user.profile.username, eventTypes[0].slug)
+        : `/${user.profile.username}/${eventTypes[0].slug}`;
     const { query } = context;
     const urlQuery = new URLSearchParams(encode(query));
 

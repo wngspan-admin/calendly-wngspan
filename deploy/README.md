@@ -55,9 +55,6 @@ Recommended WNGSPAN defaults:
 Configure these only if the feature is in use:
 
 - `ORGANIZATIONS_ENABLED`
-- `PROJECT_ID_VERCEL`
-- `TEAM_ID_VERCEL`
-- `AUTH_BEARER_TOKEN_VERCEL`
 - `STRIPE_*`
 - `SENTRY_*`
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`

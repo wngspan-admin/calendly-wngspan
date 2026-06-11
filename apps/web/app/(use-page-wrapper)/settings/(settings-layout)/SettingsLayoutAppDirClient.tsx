@@ -27,15 +27,80 @@ import type { ComponentProps } from "react";
 import React, { useEffect, useMemo, useState } from "react";
 import Shell from "~/shell/Shell";
 
-const getTabs = (
-  orgBranding: {
-    id?: number;
-    slug?: string;
-    name?: string;
-    logoUrl?: string | null;
-    fullDomain?: string | null;
-  } | null
-) => {
+type OrganizationBranding = {
+  id?: number;
+  slug?: string;
+  name?: string;
+  logoUrl?: string | null;
+  fullDomain?: string | null;
+} | null;
+
+const getOrganizationChildren = (orgBranding: OrganizationBranding): VerticalTabItemProps["children"] => {
+  if (!orgBranding) {
+    return [
+      {
+        name: "organizations",
+        href: "/settings/organizations",
+        trackingMetadata: { section: "organization", page: "list" },
+      },
+    ];
+  }
+
+  const children: NonNullable<VerticalTabItemProps["children"]> = [
+    {
+      name: "profile",
+      href: "/settings/organizations/profile",
+      trackingMetadata: { section: "organization", page: "profile" },
+    },
+    {
+      name: "general",
+      href: "/settings/organizations/general",
+      trackingMetadata: { section: "organization", page: "general" },
+    },
+    {
+      name: "guest_notifications",
+      href: "/settings/organizations/guest-notifications",
+    },
+    {
+      name: "members",
+      href: `${WEBAPP_URL}/settings/organizations/${orgBranding.slug}/members`,
+      isExternalLink: true,
+      trackingMetadata: { section: "organization", page: "members" },
+    },
+    {
+      name: "privacy_and_security",
+      href: "/settings/organizations/privacy",
+      trackingMetadata: { section: "organization", page: "privacy_and_security" },
+    },
+    {
+      name: "SSO",
+      href: "/settings/organizations/sso",
+      trackingMetadata: { section: "organization", page: "sso" },
+    },
+    {
+      name: "directory_sync",
+      href: "/settings/organizations/dsync",
+      trackingMetadata: { section: "organization", page: "directory_sync" },
+    },
+    {
+      name: "api_docs",
+      href: "/docs",
+      trackingMetadata: { section: "organization", page: "api_docs" },
+    },
+  ];
+
+  if (HAS_ORG_OPT_IN_FEATURES) {
+    children.push({
+      name: "features",
+      href: "/settings/organizations/features",
+      trackingMetadata: { section: "organization", page: "features" },
+    });
+  }
+
+  return children;
+};
+
+const getTabs = (orgBranding: OrganizationBranding): VerticalTabItemProps[] => {
   const tabs: VerticalTabItemProps[] = [
     {
       name: "my_account",
@@ -143,61 +208,7 @@ const getTabs = (
     {
       name: "organization",
       href: "/settings/organizations",
-      children: [
-        {
-          name: "profile",
-          href: "/settings/organizations/profile",
-          trackingMetadata: { section: "organization", page: "profile" },
-        },
-        {
-          name: "general",
-          href: "/settings/organizations/general",
-          trackingMetadata: { section: "organization", page: "general" },
-        },
-        {
-          name: "guest_notifications",
-          href: "/settings/organizations/guest-notifications",
-        },
-        ...(orgBranding
-          ? [
-              {
-                name: "members",
-                href: `${WEBAPP_URL}/settings/organizations/${orgBranding?.slug}/members`,
-                isExternalLink: true,
-                trackingMetadata: { section: "organization", page: "members" },
-              },
-            ]
-          : []),
-        {
-          name: "privacy_and_security",
-          href: "/settings/organizations/privacy",
-          trackingMetadata: { section: "organization", page: "privacy_and_security" },
-        },
-        {
-          name: "SSO",
-          href: "/settings/organizations/sso",
-          trackingMetadata: { section: "organization", page: "sso" },
-        },
-        {
-          name: "directory_sync",
-          href: "/settings/organizations/dsync",
-          trackingMetadata: { section: "organization", page: "directory_sync" },
-        },
-        {
-          name: "api_docs",
-          href: "/docs",
-          trackingMetadata: { section: "organization", page: "api_docs" },
-        },
-        ...(HAS_ORG_OPT_IN_FEATURES
-          ? [
-              {
-                name: "features",
-                href: "/settings/organizations/features",
-                trackingMetadata: { section: "organization", page: "features" },
-              },
-            ]
-          : []),
-      ],
+      children: getOrganizationChildren(orgBranding),
     },
     {
       name: "admin",
@@ -257,12 +268,6 @@ const getTabs = (
   for (const tab of tabs) {
     if (tab.name === "admin") {
       tab.children?.push({
-        name: "create_org",
-        href: "/settings/organizations/new",
-        trackingMetadata: { section: "admin", page: "create_org" },
-      });
-
-      tab.children?.push({
         name: "create_license_key",
         href: "/settings/license-key/new",
         trackingMetadata: { section: "admin", page: "create_license_key" },
@@ -275,7 +280,6 @@ const getTabs = (
 
 // The following keys are assigned to admin only
 const adminRequiredKeys = ["admin"];
-const organizationRequiredKeys = ["organization"];
 const organizationAdminKeys = [
   "privacy",
   "privacy_and_security",
@@ -393,7 +397,6 @@ const useTabs = ({
 
     // check if name is in adminRequiredKeys
     return processedTabs.filter((tab) => {
-      if (organizationRequiredKeys.includes(tab.name)) return !!orgBranding;
       if (tab.name === "other_teams" && !permissions?.canUpdateOrganization) return false;
 
       if (isAdmin) return true;
